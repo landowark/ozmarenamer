@@ -1,0 +1,5 @@
+{
+  "book" : ["epub", "mobi"],
+  "video" : ["mkv", "mp4", "avi"],
+  "audio" : ["mp3"]
+}

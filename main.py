@@ -1,0 +1,3 @@
+import ozma
+
+ozma.main()

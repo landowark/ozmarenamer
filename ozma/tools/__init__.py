@@ -2,6 +2,9 @@ import os
 import re
 import wordninja as wn
 from ..setup import get_media_types
+import logging
+
+logger = logging.getLogger("ozma.tools")
 
 def split_file_name(filepath):
     return os.path.basename(filepath)
@@ -31,7 +34,8 @@ def get_parsible_file_name(filepath):
     if disc:
         filename = filename.replace(disc, "")
         disc = int(disc.strip("D"))
-    filename = " ".join(wn.split(filename))
+    filename = " ".join(wn.split(filename)).title()
+    logger.debug("Using filename={}, season={}, episode={}, disc={}".format(filename, str(season), str(episode), str(disc)))
     return filename, season, episode, disc
 
 

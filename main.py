@@ -1,4 +1,5 @@
-#!/opt/anaconda/envs/ozma_renamer/bin/python
+#!/usr/bin/env python
+
 
 import ozma
 import logging
@@ -9,9 +10,11 @@ logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
 fh = logging.handlers.RotatingFileHandler('ozma.log', mode='a', maxBytes=100000, backupCount=3, encoding=None, delay=False)
 fh.setLevel(logging.DEBUG)
+fh.name = "File"
 # create console handler with a higher log level
 ch = logging.StreamHandler()
 ch.setLevel(logging.WARNING)
+ch.name = "Stream"
 # create formatter and add it to the handlers
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)

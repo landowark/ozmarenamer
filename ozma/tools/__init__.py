@@ -34,7 +34,12 @@ def get_parsible_file_name(filepath):
     if disc:
         filename = filename.replace(disc, "")
         disc = int(disc.strip("D"))
+    year = check_for_year(filename)
+    if year:
+        print(year)
+        filename = filename.replace(year, "")
     filename = " ".join(wn.split(filename)).title()
+    if year: filename = "{filename} ({year})".format(filename=filename, year=year)
     logger.debug("Using filename={}, season={}, episode={}, disc={}".format(filename, str(season), str(episode), str(disc)))
     return filename, season, episode, disc
 
@@ -77,3 +82,11 @@ def get_media_type(extenstion):
     for type in types.keys():
         if extenstion in types[type]:
             return type
+
+
+def check_for_year(filename):
+    year = re.compile(r'(20\d{2}|19\d{2})')
+    try:
+        return re.findall(year, filename)[0].upper()
+    except:
+        return None

@@ -1,4 +1,5 @@
-import sys
+import shutil
+import sys, os
 from .setup import get_config, get_params, get_filepath
 from .tools import *
 from pytvdbapi import api
@@ -16,6 +17,7 @@ class MediaParser():
                              "tv": self.search_tv,
                              "movie": self.search_movie,
                              "audio": self.search_audio}
+        print(self.__dict__)
 
     def parse_file(self):
         self.filepath = get_filepath()
@@ -75,3 +77,8 @@ def main():
     mParser = MediaParser()
     file_source, file_destination = mParser.parse_file()
     logger.debug("Moving {} to {}.".format(file_source, file_destination))
+    if os.path.isfile(file_source):
+        os.makedirs(os.path.dirname(file_destination), exist_ok=True)
+        shutil.copy2(file_source, file_destination)
+    else:
+        logger.error("The source is not a real file.")

@@ -23,4 +23,5 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
+logger.debug("Starting Run.")
 ozma.main()

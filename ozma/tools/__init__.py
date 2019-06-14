@@ -5,6 +5,7 @@ from ..setup import get_media_types
 import logging
 
 logger = logging.getLogger("ozma.tools")
+strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER"]
 
 def split_file_name(filepath):
     return os.path.basename(filepath)
@@ -19,6 +20,10 @@ def get_parsible_file_name(filepath):
     # remove season number
     filename = remove_extension(split_file_name(filepath))
     filename = filename.replace(".", " ")
+    for word in strip_list:
+        regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
+        filename = re.sub(regex, "", filename)
+        print(filename)
     season = get_season(filename)
     episode = get_episode(filename)
     if not season and not episode:

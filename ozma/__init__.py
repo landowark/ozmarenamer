@@ -80,4 +80,4 @@ def main():
         os.makedirs(os.path.dirname(file_destination), exist_ok=True)
         shutil.copy2(file_source, file_destination)
     else:
-        logger.error("The source is not a real file.")
+        logger.error("{} is not a real file.".format(file_source))

@@ -23,7 +23,6 @@ def get_parsible_file_name(filepath):
     for word in strip_list:
         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
         filename = re.sub(regex, "", filename)
-        print(filename)
     season = get_season(filename)
     episode = get_episode(filename)
     if not season and not episode:
@@ -41,7 +40,6 @@ def get_parsible_file_name(filepath):
         disc = int(disc.strip("D"))
     year = check_for_year(filename)
     if year:
-        print(year)
         filename = filename.replace(year, "")
     filename = " ".join(wn.split(filename)).title()
     if year: filename = "{filename} ({year})".format(filename=filename, year=year)

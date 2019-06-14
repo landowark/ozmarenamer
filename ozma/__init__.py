@@ -17,7 +17,6 @@ class MediaParser():
                              "tv": self.search_tv,
                              "movie": self.search_movie,
                              "audio": self.search_audio}
-        print(self.__dict__)
 
     def parse_file(self):
         self.filepath = get_filepath()

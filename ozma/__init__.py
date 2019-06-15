@@ -80,20 +80,29 @@ class MediaParser():
 def main():
     mParser = MediaParser()
     mParser.parse_file()
-    print(mParser.__dict__)
-    file_destination = mParser.rsync_target.replace(" ", "\\ ")
-    file_source = mParser.filepath
-    rsync_dir = mParser.rsync_mkdirs.replace(" ", "\\ ")
-    username = mParser.rsync_user
-    password = mParser.rsync_pass
-    # print(file_source, file_destination, username, password)
-    logger.debug("Moving {} to {}.".format(file_source, file_destination))
-    if os.path.isfile(file_source):
-        process = Popen(['linux_scripts/rsync.sh', file_source, rsync_dir, file_destination, username, password], stdout=PIPE,
-                        stderr=STDOUT)
-        logger.debug(process.stdout.read())
-        if process.stderr != None:
-            logger.error(process.stderr)
-        pass
+    logger.debug("Moving {} to {}.".format(mParser.filepath, mParser.rsync_target))
+    if os.path.isfile(mParser.filepath):
+        returncode = run_rsync(mParser)
+        if returncode == 0:
+            logger.debug("rsync successful.")
+            # todo update Plex.
+        else:
+            logger.error("Problem with rsync.")
     else:
-        logger.error("{} is not a real file.".format(file_source))
+        logger.error("{} is not a real file.".format(mParser.filepath))
+
+
+def run_rsync(mParser):
+    process = Popen([
+        'linux_scripts/rsync.sh',
+        mParser.filepath,
+        mParser.rsync_mkdirs.replace(" ", "\\ "),
+        mParser.rsync_target.replace(" ", "\\ "),
+        mParser.rsync_user,
+        mParser.rsync_pass
+    ], stdout=PIPE, stderr=STDOUT)
+    logger.debug(process.stdout.read())
+    if process.stderr != None:
+        logger.error(process.stderr)
+    process.communicate()
+    return process.returncode

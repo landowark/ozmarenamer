@@ -1,4 +1,4 @@
-import shutil
+from subprocess import Popen, PIPE, STDOUT
 import sys, os
 from .setup import get_config, get_params, get_filepath
 from .tools import *
@@ -17,6 +17,8 @@ class MediaParser():
                              "tv": self.search_tv,
                              "movie": self.search_movie,
                              "audio": self.search_audio}
+        self.rsync_user = self.settings['rsync_user']
+        self.rsync_pass = self.settings['rsync_pass']
 
     def parse_file(self):
         self.filepath = get_filepath()
@@ -31,7 +33,8 @@ class MediaParser():
         logger.debug("Setting media type as {}.".format(self.mediatype))
         func = self.FUNCTION_MAP[self.mediatype]
         func()
-        return self.filepath, self.final_filename
+        del self.settings
+        del self.FUNCTION_MAP
 
     def search_book(self):
         logger.error("Book functionality not yet implemented.")
@@ -52,6 +55,8 @@ class MediaParser():
             episode_number=str(self.episode).zfill(2),
             episode_name=self.episode_name,
             extension=self.extenstion)
+        self.rsync_mkdirs = os.path.join(self.settings['make_dir_schema'].format(media_type=self.mediatype), os.path.split(self.final_filename)[0])
+        self.rsync_target = self.settings['rsync_schema'].format(media_type=self.mediatype) + self.final_filename
 
 
     def search_movie(self):
@@ -74,10 +79,21 @@ class MediaParser():
 
 def main():
     mParser = MediaParser()
-    file_source, file_destination = mParser.parse_file()
+    mParser.parse_file()
+    print(mParser.__dict__)
+    file_destination = mParser.rsync_target.replace(" ", "\\ ")
+    file_source = mParser.filepath
+    rsync_dir = mParser.rsync_mkdirs.replace(" ", "\\ ")
+    username = mParser.rsync_user
+    password = mParser.rsync_pass
+    # print(file_source, file_destination, username, password)
     logger.debug("Moving {} to {}.".format(file_source, file_destination))
     if os.path.isfile(file_source):
-        os.makedirs(os.path.dirname(file_destination), exist_ok=True)
-        shutil.copy2(file_source, file_destination)
+        process = Popen(['linux_scripts/rsync.sh', file_source, rsync_dir, file_destination, username, password], stdout=PIPE,
+                        stderr=STDOUT)
+        logger.debug(process.stdout.read())
+        if process.stderr != None:
+            logger.error(process.stderr)
+        pass
     else:
         logger.error("{} is not a real file.".format(file_source))

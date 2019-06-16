@@ -119,3 +119,17 @@ def check_for_year(filename):
         return re.findall(year, filename)[0].upper()
     except:
         return None
+
+
+def move_article_to_end(filename):
+    regex = re.compile(r"^(The|A|An)")
+    title = re.split(regex, filename)[1:]
+    if len(title) > 0:
+        title.append(", ")
+        title.append(title.pop(0))
+        title = "".join(title).strip()
+        return title
+    else:
+        return filename
+
+

@@ -46,7 +46,7 @@ class MediaParser():
         self.tvdb_apikey = self.settings['thetvdbkey']
         tvdb = api.TVDB(self.tvdb_apikey)
         series = tvdb.search(self.filename, self.settings['main_language'])[0]
-        self.series_name = series.SeriesName
+        self.series_name = move_article_to_end(series.SeriesName)
         if isinstance(self.season, datetime.date):
             logger.debug("Season given as date, using search by date: {}.".format(self.season))
             temp_episode = series.api.get_episode_by_air_date(language=self.settings['main_language'], air_date=self.season, series_id=series.seriesid)

@@ -5,6 +5,8 @@ from .tools import *
 from pytvdbapi import api
 from imdb import IMDb
 import logging
+from plexapi.server import PlexServer
+import datetime
 
 logger = logging.getLogger("ozma.parser")
 
@@ -33,7 +35,6 @@ class MediaParser():
         logger.debug("Setting media type as {}.".format(self.mediatype))
         func = self.FUNCTION_MAP[self.mediatype]
         func()
-        del self.settings
         del self.FUNCTION_MAP
 
     def search_book(self):
@@ -46,6 +47,11 @@ class MediaParser():
         tvdb = api.TVDB(self.tvdb_apikey)
         series = tvdb.search(self.filename, self.settings['main_language'])[0]
         self.series_name = series.SeriesName
+        if isinstance(self.season, datetime.date):
+            logger.debug("No episode found, using search by date: {}.".format(self.season))
+            temp_episode = series.api.get_episode_by_air_date(language=self.settings['main_language'], air_date=self.season, series_id=series.seriesid)
+            self.season = temp_episode.SeasonNumber
+            self.episode = temp_episode.EpisodeNumber
         logger.debug("Found series {}.".format(self.series_name))
         self.episode_name = series[self.season][self.episode].EpisodeName
         logger.debug("Found episode {}".format(self.episode_name))
@@ -85,7 +91,8 @@ def main():
         returncode = run_rsync(mParser)
         if returncode == 0:
             logger.debug("rsync successful.")
-            # todo update Plex.
+            plex = PlexServer(mParser.settings['plex_url'], mParser.settings['plex_token'])
+            plex.library.refresh()
         else:
             logger.error("Problem with rsync.")
     else:

@@ -3,9 +3,10 @@ import re
 import wordninja as wn
 from ..setup import get_media_types
 import logging
+from datetime import datetime
 
 logger = logging.getLogger("ozma.tools")
-strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER"]
+strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED"]
 
 def split_file_name(filepath):
     return os.path.basename(filepath)
@@ -15,6 +16,18 @@ def get_extension(filepath):
 
 def remove_extension(filepath):
     return os.path.splitext(filepath)[0]
+
+
+def get_episode_date(filename):
+    season = re.compile(r'((19\d{2}|20\d{2})\s(0|1)?\d\s[0,1,2,3]?\d)')
+    try:
+        if re.findall(season, filename)[0].__class__ == (0,0).__class__:
+            return re.findall(season, filename)[0][0]
+        else:
+            return re.findall(season, filename)[0]
+    except:
+        return None
+
 
 def get_parsible_file_name(filepath):
     # remove season number
@@ -28,9 +41,23 @@ def get_parsible_file_name(filepath):
     if not season and not episode:
         season, episode = get_season_episode_dxdd(filename)
         filename = filename.replace("{}x{}".format(season, episode), "")
+    if not season and not episode:
+        season = get_episode_date(filename)
+        episode = None
+        print(filename.split(season))
+        filename = filename.split(season)[0].strip()
+        season = datetime.strptime(season, "%Y %m %d").date()
     if season:
-        filename = filename.replace(season, "")
-        season = int(season.strip("S"))
+        try:
+            filename = filename.replace(season, "")
+        except TypeError:
+            filename = filename.replace(season.strftime("%Y %m %d"), "")
+        try:
+            season = int(season.strip("S"))
+        except ValueError:
+            season = season
+        except AttributeError:
+            season = season
     if episode:
         filename = filename.replace(episode, "")
         episode = int(episode.strip("E"))

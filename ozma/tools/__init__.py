@@ -44,7 +44,6 @@ def get_parsible_file_name(filepath):
     if not season and not episode:
         season = get_episode_date(filename)
         episode = None
-        print(filename.split(season))
         filename = filename.split(season)[0].strip()
         season = datetime.strptime(season, "%Y %m %d").date()
     if season:

@@ -21,7 +21,7 @@ def remove_extension(filepath):
 def get_episode_date(filename):
     season = re.compile(r'((19\d{2}|20\d{2})\s(0|1)?\d\s[0,1,2,3]?\d)')
     try:
-        if re.findall(season, filename)[0].__class__ == (0,0).__class__:
+        if isinstance(re.findall(season, filename)[0], tuple):
             return re.findall(season, filename)[0][0]
         else:
             return re.findall(season, filename)[0]

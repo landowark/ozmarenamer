@@ -91,8 +91,12 @@ def main():
         returncode = run_rsync(mParser)
         if returncode == 0:
             logger.debug("rsync successful.")
-            plex = PlexServer(mParser.settings['plex_url'], mParser.settings['plex_token'])
-            plex.library.refresh()
+            try:
+                logger.debug("Updating Plex library.")
+                plex = PlexServer(mParser.settings['plex_url'], mParser.settings['plex_token'])
+                plex.library.refresh()
+            except Exception as e:
+                logger.error(e)
         else:
             logger.error("Problem with rsync.")
     else:

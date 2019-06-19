@@ -15,6 +15,7 @@ def remove_ratioed_torrents():
     for iii, torrent in enumerate(c.get_torrents()):
         if torrent.ratio >= torrent.seed_ratio_limit:
             logger.debug("Removing torrent: {}".format(torrent._get_name_string().decode('utf-8')))
+            # Transmmission uses an index starting at 1 so... iii+1
             c.remove_torrent(iii+1)
 
 

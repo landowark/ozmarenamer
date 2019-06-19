@@ -45,7 +45,10 @@ def get_parsible_file_name(filepath):
         season = get_episode_date(filename)
         episode = None
         filename = filename.split(season)[0].strip()
-        season = datetime.strptime(season, "%Y %m %d").date()
+        try:
+            season = datetime.strptime(season, "%Y %m %d").date()
+        except TypeError:
+            logger.debug("No season found.")
     if season:
         try:
             filename = filename.replace(season, "")
@@ -131,5 +134,11 @@ def move_article_to_end(filename):
         return title
     else:
         return filename
+
+
+def extract_files_if_folder(dir_path):
+    types_dict = get_media_types()
+    allowed_ext = [item for sublist in [types_dict[item] for item in types_dict] for item in sublist]
+    return [os.path.join(dir_path, item) for item in os.listdir(dir_path) if os.path.splitext(item)[1] in allowed_ext]
 
 

@@ -125,7 +125,7 @@ def check_for_year(filename):
 
 
 def move_article_to_end(filename):
-    regex = re.compile(r"^(The|A|An)")
+    regex = re.compile(r"^(The|A|An)\s")
     title = re.split(regex, filename)[1:]
     if len(title) > 0:
         title.append(", ")
@@ -139,6 +139,6 @@ def move_article_to_end(filename):
 def extract_files_if_folder(dir_path):
     types_dict = get_media_types()
     allowed_ext = [item for sublist in [types_dict[item] for item in types_dict] for item in sublist]
-    return [os.path.join(dir_path, item) for item in os.listdir(dir_path) if os.path.splitext(item)[1] in allowed_ext]
+    return [os.path.join(dir_path, item) for item in os.listdir(dir_path) if os.path.splitext(item)[1][1:] in allowed_ext]
 
 

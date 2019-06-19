@@ -25,26 +25,27 @@ class MediaManager():
 
     def __init__(self):
         self.settings = dict(**get_params(), **get_config())
-        self.FUNCTION_MAP = {"book": self.search_book,
-                             "tv": self.search_tv,
-                             "movies": self.search_movie,
-                             "audio": self.search_audio}
         self.filepath = get_filepath()
         self.mediaobjs = []
 
     def parse_file(self, filepath):
+        FUNCTION_MAP = {"book": self.search_book,
+                        "tv": self.search_tv,
+                        "movies": self.search_movie,
+                        "audio": self.search_audio}
         logger.debug("Starting run on {}".format(filepath))
+        # if the torrent is a folder recur for each file in folder of appropriate type.
         if os.path.isdir(filepath):
             logger.debug("Filepath {} is a directory, extracting files.".format(filepath))
             file_list = extract_files_if_folder(dir_path=filepath)
             if file_list != []:
+                logger.debug("Look out, it's recursion time!")
                 for file in file_list:
-                    logger.debug("Look out, it's recursion time!")
                     self.parse_file(filepath=file)
             else:
                 logger.error("There are no appropriate files in {}".format(filepath))
         else:
-            self.extension = get_extension(self.filepath)
+            self.extension = get_extension(filepath)
             mediatype = get_media_type(self.extension)
             self.filename, self.season, self.episode, self.disc = get_parsible_file_name(filepath)
             if mediatype == 'video':
@@ -53,9 +54,8 @@ class MediaManager():
                 else:
                     mediatype = 'movies'
             logger.debug("Setting media type as {}.".format(mediatype))
-            func = self.FUNCTION_MAP[mediatype]
+            func = FUNCTION_MAP[mediatype]
             func()
-            del self.FUNCTION_MAP
             rsync_mkdirs = os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
                                              os.path.split(self.final_filename)[0])
             rsync_target = self.settings['rsync_schema'].format(media_type=mediatype) + self.final_filename
@@ -79,7 +79,7 @@ class MediaManager():
             self.episode = temp_episode.EpisodeNumber
         logger.debug("Found series {}.".format(series_name))
         episode_name = series[self.season][self.episode].EpisodeName
-        logger.debug("Found episode {}".format(self.episode_name))
+        logger.debug("Found episode {}".format(episode_name))
         self.final_filename = self.settings['tv_schema'].format(
             series_name=series_name,
             season_number=str(self.season).zfill(2),
@@ -113,7 +113,7 @@ def main():
     for file in mParser.mediaobjs:
         print(file.__dict__)
         if os.path.isfile(file.source_file):
-            logger.debug("Moving {} to {}.".format(file.source_file, file.rsync_target))
+            logger.debug("Moving {} to {}.".format(file.source_file, file.destination_file))
             returncode = run_rsync(file)
             if returncode == 0:
                 logger.debug("rsync successful.")

@@ -24,6 +24,7 @@ class MediaParser():
 
     def parse_file(self):
         self.filepath = get_filepath()
+        logger.debug("Starting run on {}".format(self.filepath))
         self.extenstion = get_extension(self.filepath)
         self.mediatype = get_media_type(self.extenstion)
         self.filename, self.season, self.episode, self.disc = get_parsible_file_name(self.filepath)

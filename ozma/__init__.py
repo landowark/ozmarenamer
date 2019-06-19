@@ -106,6 +106,7 @@ def main():
 
 
 def run_rsync(mParser):
+    print(os.getcwd())
     process = Popen([
         'linux_scripts/rsync.sh',
         mParser.filepath,

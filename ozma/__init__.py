@@ -11,7 +11,6 @@ from .tools import transmission
 
 logger = logging.getLogger("ozma.parser")
 
-
 class MediaParser():
 
     def __init__(self):

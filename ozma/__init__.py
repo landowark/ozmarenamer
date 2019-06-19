@@ -7,7 +7,7 @@ from imdb import IMDb
 import logging
 from plexapi.server import PlexServer
 import datetime
-from .tools.transmission import remove_ratioed_torrents
+from .tools import transmission
 
 logger = logging.getLogger("ozma.parser")
 
@@ -102,12 +102,11 @@ def main():
             logger.error("Problem with rsync.")
     else:
         logger.error("{} is not a real file.".format(mParser.filepath))
-    remove_ratioed_torrents()
+    transmission.remove_ratioed_torrents()
 
 
 def run_rsync(mParser):
     os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    print(os.getcwd())
     process = Popen([
         'linux_scripts/rsync.sh',
         mParser.filepath,

@@ -11,6 +11,7 @@ except Exception as e:
 
 
 def remove_ratioed_torrents():
+    logger.debug("Checking torrents.")
     for iii, torrent in enumerate(c.get_torrents()):
         if torrent.ratio >= torrent.seed_ratio_limit:
             logger.debug("Removing torrent: {}".format(torrent._get_name_string().decode('utf-8')))

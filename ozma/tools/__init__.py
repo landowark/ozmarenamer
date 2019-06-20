@@ -56,6 +56,8 @@ def get_parsible_file_name(filepath):
             filename = filename.replace(season.lower(), "")
         except TypeError:
             filename = filename.replace(season.strftime("%Y %m %d"), "")
+        except AttributeError:
+            filename = filename.replace(season.strftime("%Y %m %d"), "")
         try:
             season = int(season.strip("S"))
         except ValueError:

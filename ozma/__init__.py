@@ -77,7 +77,7 @@ class MediaManager():
             # make sure dir created by pytvdbapi is useable by all in group
             logger.debug('Making sure dir created by pytvdbapi is useable by all in group')
             for root, dirs, files in os.walk("/tmp/pytvdbapi"):
-                my_stat = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP
+                my_stat = 0o660
                 os.chmod(root, my_stat)
                 for d in dirs:
                     os.chmod(os.path.join(root, d), my_stat)

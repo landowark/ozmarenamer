@@ -8,6 +8,7 @@ import logging
 from plexapi.server import PlexServer
 import datetime
 from .tools import transmission
+import stat
 
 
 logger = logging.getLogger("ozma.parser")
@@ -71,7 +72,18 @@ class MediaManager():
     def search_tv(self):
         tvdb_apikey = self.settings['thetvdbkey']
         tvdb = api.TVDB(tvdb_apikey)
-        series = tvdb.search(self.filename, self.settings['main_language'])[0]
+        try:
+            series = tvdb.search(self.filename, self.settings['main_language'])[0]
+            # make sure dir created by pytvdbapi is useable by all in group
+            for root, dirs, files in os.walk("/tmp/pytvdbapi"):
+                my_stat = stat.S_IRUSR | stat.S_IWUSR | stat.S_IRGRP | stat.S_IWGRP
+                os.chmod(root, my_stat)
+                for d in dirs:
+                    os.chmod(os.path.join(root, d), my_stat)
+                for f in files:
+                    os.chmod(os.path.join(root, f), my_stat)
+        except PermissionError as e:
+            logger.error("Permission error for {}".format(e.filename))
         series_name = move_article_to_end(series.SeriesName)
         if isinstance(self.season, datetime.date):
             logger.debug("Season given as date, using search by date: {}.".format(self.season))

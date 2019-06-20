@@ -140,7 +140,7 @@ def main():
         else:
             logger.error("{} is not a real file.".format(mParser.filepath))
     transmission.remove_ratioed_torrents()
-    remove_temp_files()
+    # remove_temp_files()
 
 
 def run_rsync(file):

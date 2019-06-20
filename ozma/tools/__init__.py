@@ -146,6 +146,8 @@ def extract_files_if_folder(dir_path):
     allowed_ext = [item for sublist in [types_dict[item] for item in types_dict] for item in sublist]
     files = [os.path.join(dir_path, item) for item in os.listdir(dir_path) if os.path.splitext(item)[1][1:] in allowed_ext]
     dirs = [item[0] for item in os.walk(dir_path)]
-    return files + dirs
+    files = files + dirs
+    files.remove(dir_path)
+    return files
 
 

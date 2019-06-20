@@ -4,6 +4,7 @@ import wordninja as wn
 from ..setup import get_media_types
 import logging
 from datetime import datetime
+import shutil
 
 logger = logging.getLogger("ozma.tools")
 strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED"]
@@ -151,3 +152,6 @@ def extract_files_if_folder(dir_path):
     return files
 
 
+def remove_temp_files():
+    logger.debug("Removing temporary files.")
+    shutil.rmtree("/tmp/pytvdbapi", ignore_errors=True)

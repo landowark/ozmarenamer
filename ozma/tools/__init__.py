@@ -41,6 +41,7 @@ def get_parsible_file_name(filepath):
     if not season and not episode:
         season, episode = get_season_episode_dxdd(filename)
         filename = filename.replace("{}x{}".format(season, episode), "")
+        filename = filename.replace("{}x{}".format(season, episode), "")
     if not season and not episode:
         season = get_episode_date(filename)
         episode = None
@@ -51,7 +52,8 @@ def get_parsible_file_name(filepath):
             logger.debug("No season found.")
     if season:
         try:
-            filename = filename.replace(season, "")
+            filename = filename.replace(season.upper(), "")
+            filename = filename.replace(season.lower(), "")
         except TypeError:
             filename = filename.replace(season.strftime("%Y %m %d"), "")
         try:
@@ -61,7 +63,8 @@ def get_parsible_file_name(filepath):
         except AttributeError:
             season = season
     if episode:
-        filename = filename.replace(episode, "")
+        filename = filename.replace(episode.upper(), "")
+        filename = filename.replace(episode.lower(), "")
         episode = int(episode.strip("E"))
     disc = get_disc(filename)
     if disc:

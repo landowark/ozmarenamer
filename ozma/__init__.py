@@ -120,7 +120,6 @@ def main():
                 try:
                     logger.debug("Updating Plex library.")
                     plex = PlexServer(mParser.settings['plex_url'], mParser.settings['plex_token'])
-                    # plex.library.refresh()
                     plex.library.update()
                 except Exception as e:
                     logger.error(e)

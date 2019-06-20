@@ -144,6 +144,8 @@ def move_article_to_end(filename):
 def extract_files_if_folder(dir_path):
     types_dict = get_media_types()
     allowed_ext = [item for sublist in [types_dict[item] for item in types_dict] for item in sublist]
-    return [os.path.join(dir_path, item) for item in os.listdir(dir_path) if os.path.splitext(item)[1][1:] in allowed_ext]
+    files = [os.path.join(dir_path, item) for item in os.listdir(dir_path) if os.path.splitext(item)[1][1:] in allowed_ext]
+    dirs = [item[0] for item in os.walk(dir_path)]
+    return files + dirs
 
 

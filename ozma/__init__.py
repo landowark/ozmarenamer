@@ -76,13 +76,11 @@ class MediaManager():
             series = tvdb.search(self.filename, self.settings['main_language'])[0]
             # make sure dir created by pytvdbapi is useable by all in group
             logger.debug('Making sure dir created by pytvdbapi is useable by all in group')
-            for root, dirs, files in os.walk("/tmp/pytvdbapi"):
-                my_stat = 0o660
-                os.chmod(root, my_stat)
-                for d in dirs:
-                    os.chmod(os.path.join(root, d), my_stat)
-                for f in files:
-                    os.chmod(os.path.join(root, f), my_stat)
+            return_code = change_permission('/tmp/pytvdbapi')
+            if return_code == 0:
+                logger.debug("chmod successful.")
+            else:
+                logger.error("Problem with chmod")
         except PermissionError as e:
             logger.error("Permission error for {}".format(e.filename))
         series_name = move_article_to_end(series.SeriesName)
@@ -156,6 +154,13 @@ def run_rsync(file):
         file.rsync_pass
     ], stdout=PIPE, stderr=STDOUT)
     logger.debug(process.stdout.read())
+    if process.stderr != None:
+        logger.error(process.stderr)
+    process.communicate()
+    return process.returncode
+
+def change_permission(directory):
+    process = Popen(['chmod', "-R", "770", directory], stdout=PIPE, stderr=STDOUT)
     if process.stderr != None:
         logger.error(process.stderr)
     process.communicate()

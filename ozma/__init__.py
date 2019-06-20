@@ -123,7 +123,6 @@ def main():
     mParser = MediaManager()
     mParser.parse_file(mParser.filepath)
     for file in mParser.mediaobjs:
-        print(file.__dict__)
         if os.path.isfile(file.source_file):
             logger.debug("Moving {} to {}.".format(file.source_file, file.destination_file))
             returncode = run_rsync(file)

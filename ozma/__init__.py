@@ -113,7 +113,7 @@ class MediaManager():
         except IndexError:
             logger.warning("Looks like IMDB didn't respond. Falling back to split.")
             movie_list = re.split(r'\s\(', self.filename)
-            movie = {'title': movie_list[0], 'year': movie_list[1]}
+            movie = {'title': movie_list[0], 'year': movie_list[1].strip(")")}
         movie_name = movie['title']
         year_of_release = movie['year']
         self.final_filename = self.settings['movie_schema'].format(

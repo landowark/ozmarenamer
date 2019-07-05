@@ -64,6 +64,8 @@ class MediaManager():
             self.final_filename = self.final_filename.replace(":", "-")
             rsync_mkdirs = os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
                                              os.path.split(self.final_filename)[0])
+            rsync_mkdirs = rsync_mkdirs.replace("(", "\\(")
+            rsync_mkdirs = rsync_mkdirs.replace(")", "\\)")
             rsync_target = self.settings['rsync_schema'].format(media_type=mediatype) + self.final_filename
             rsync_target = rsync_target.replace("(", "\\(")
             rsync_target = rsync_target.replace(")", "\\)")

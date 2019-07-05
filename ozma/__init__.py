@@ -135,8 +135,7 @@ def main():
                 except Exception as e:
                     logger.error(e)
             else:
-                logger.error("Problem with rsync. Attempting with stripped filename.")
-
+                logger.error("Problem with rsync.")
         else:
             logger.error("{} is not a real file.".format(mParser.filepath))
     transmission.remove_ratioed_torrents()

@@ -60,6 +60,7 @@ class MediaManager():
             rsync_mkdirs = os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
                                              os.path.split(self.final_filename)[0])
             rsync_target = self.settings['rsync_schema'].format(media_type=mediatype) + self.final_filename
+            rsync_target = rsync_target.replace(":", "-")
             self.mediaobjs.append(MediaObject(filepath, rsync_mkdirs, rsync_target, self.settings['rsync_user'], self.settings['rsync_pass']))
 
 
@@ -134,7 +135,8 @@ def main():
                 except Exception as e:
                     logger.error(e)
             else:
-                logger.error("Problem with rsync.")
+                logger.error("Problem with rsync. Attempting with stripped filename.")
+
         else:
             logger.error("{} is not a real file.".format(mParser.filepath))
     transmission.remove_ratioed_torrents()

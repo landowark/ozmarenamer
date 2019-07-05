@@ -107,9 +107,14 @@ class MediaManager():
 
     def search_movie(self):
         ai = IMDb()
-        movie = ai.search_movie(self.filename)[0]
+        try:
+            movie = ai.search_movie(self.filename)[0]
+            logger.debug("Found movie {}".format(movie['title']))
+        except IndexError:
+            logger.warning("Looks like IMDB didn't respond. Falling back to split.")
+            movie_list = re.split(r'\s\(', self.filename)
+            movie = {'title': movie_list[0], 'year': movie_list[1]}
         movie_name = movie['title']
-        logger.debug("Found movie {}".format(movie_name))
         year_of_release = movie['year']
         self.final_filename = self.settings['movie_schema'].format(
             movie_name=movie_name,

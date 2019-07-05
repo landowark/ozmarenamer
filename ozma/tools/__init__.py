@@ -34,23 +34,32 @@ def get_parsible_file_name(filepath):
     # remove season number
     filename = remove_extension(split_file_name(filepath))
     filename = filename.replace(".", " ")
+    filename = re.sub(re.compile(r'\[.*\]'), "", filename)
     for word in strip_list:
         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
         filename = re.sub(regex, "", filename)
+    # print("Post strip list: {}".format(filename))
     season = get_season(filename)
     episode = get_episode(filename)
     if not season and not episode:
+        logger.debug("No season or episode found. Attempting dxdd method.")
+        # print("No season or episode found. Attempting dxdd method.")
         season, episode = get_season_episode_dxdd(filename)
         filename = filename.replace("{}x{}".format(season, episode), "")
         filename = filename.replace("{}x{}".format(season, episode), "")
+    # print("Post dxdd method: {}".format(filename))
     if not season and not episode:
+        logger.debug("No season or episode found. Attempting date method.")
+        # print("No season or episode found. Attempting date method.")
         season = get_episode_date(filename)
         episode = None
-        filename = filename.split(season)[0].strip()
-        try:
-            season = datetime.strptime(season, "%Y %m %d").date()
-        except TypeError:
-            logger.debug("No season found.")
+        if season:
+            filename = filename.split(season)[0].strip()
+            try:
+                season = datetime.strptime(season, "%Y %m %d").date()
+            except TypeError:
+                logger.debug("No season found.")
+    # print("Post date method: {}".format(filename))
     if season:
         try:
             filename = filename.replace(season.upper(), "")
@@ -65,17 +74,21 @@ def get_parsible_file_name(filepath):
             season = season
         except AttributeError:
             season = season
+    # print("Post season: {}".format(filename))
     if episode:
         filename = filename.replace(episode.upper(), "")
         filename = filename.replace(episode.lower(), "")
         episode = int(episode.strip("E"))
+    # print("Post episode: {}".format(filename))
     disc = get_disc(filename)
     if disc:
         filename = filename.replace(disc, "")
         disc = int(disc.strip("D"))
+    # print("Post disc: {}".format(filename))
     year = check_for_year(filename)
     if year:
         filename = filename.replace(year, "")
+    # print("Post year: {}".format(filename))
     filename = " ".join(wn.split(filename)).title()
     if year: filename = "{filename} ({year})".format(filename=filename, year=year)
     logger.debug("Using filename={}, season={}, episode={}, disc={}".format(filename, str(season), str(episode), str(disc)))

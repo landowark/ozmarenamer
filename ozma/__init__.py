@@ -1,5 +1,5 @@
 from subprocess import Popen, PIPE, STDOUT
-import sys, os
+import sys
 from .setup import get_config, get_params, get_filepath, get_media_types
 from .tools import *
 from pytvdbapi import api
@@ -8,7 +8,6 @@ import logging
 from plexapi.server import PlexServer
 import datetime
 from .tools import transmission
-import stat
 
 
 logger = logging.getLogger("ozma.parser")

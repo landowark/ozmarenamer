@@ -10,6 +10,7 @@ def get_cliarg():
     aParser = ArgumentParser()
     aParser.add_argument("filename", type=str, help="The file to be parsed.")
     aParser.add_argument("-v", "--verbose", help="Verbose mode on", action="store_true")
+    aParser.add_argument("-e", "--extras", help="Scrape movies for extras.", action="store_true")
     args = aParser.parse_args()
     return args.__dict__
 

@@ -24,6 +24,7 @@ class MediaObject():
         self.destination_file = destination_file
         self.rsync_user = rsync_user
         self.rsync_pass = rsync_pass
+        self.extra_files = []
 
 
 class MediaManager():
@@ -111,11 +112,13 @@ class MediaManager():
 
     def search_movie(self):
         ai = IMDb()
+        split = False
         try:
             movie = ai.search_movie(self.filename)[0]
             logger.debug("Found movie {}".format(movie['title']))
         except IndexError:
             logger.warning("Looks like IMDB didn't respond. Falling back to split.")
+            split = True
             movie_list = re.split(r'\s\(', self.filename)
             movie = {'title': movie_list[0], 'year': movie_list[1].strip(")")}
         movie_name = movie['title']
@@ -125,6 +128,9 @@ class MediaManager():
             year_of_release = year_of_release,
             extension = self.extension
         )
+        if not split and self.settings['extras']:
+            logger.debug("We want extras!")
+
 
 
     def search_audio(self):
@@ -160,8 +166,8 @@ def run_rsync(file):
     process = Popen([
         'linux_scripts/rsync.sh',
         file.source_file,
-        file.destination_dir.replace(" ", "\\ "),
-        file.destination_file.replace(" ", "\\ "),
+        file.destination_dir.replace(" ", "\\ ").replace("'", "\\'"),
+        file.destination_file.replace(" ", "\\ ").replace("'", "\\'"),
         file.rsync_user,
         file.rsync_pass
     ], stdout=PIPE, stderr=STDOUT)

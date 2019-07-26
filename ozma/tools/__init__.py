@@ -7,7 +7,8 @@ from datetime import datetime
 import shutil
 
 logger = logging.getLogger("ozma.tools")
-strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED"]
+strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED", "DVDRip", "HC",
+              "HDRip", "XviD", "AC3-EVO", "BRRip"]
 
 def split_file_name(filepath):
     return os.path.basename(filepath)

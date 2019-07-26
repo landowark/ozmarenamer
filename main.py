@@ -6,6 +6,7 @@ import logging
 import logging.handlers
 import sys
 from contextlib import redirect_stderr
+from ozma.setup.custom_loggers import GroupWriteRotatingFileHandler
 
 
 class StreamToLogger(object):
@@ -24,7 +25,7 @@ class StreamToLogger(object):
 logger = logging.getLogger('ozma')
 logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.handlers.RotatingFileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ozma.log'), mode='a', maxBytes=100000, backupCount=3, encoding=None, delay=False)
+fh =  GroupWriteRotatingFileHandler(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'ozma.log'), mode='a', maxBytes=100000, backupCount=3, encoding=None, delay=False)
 fh.setLevel(logging.DEBUG)
 fh.name = "File"
 # create console handler with a higher log level
@@ -39,7 +40,7 @@ ch.setFormatter(formatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 stderr_logger = logging.getLogger('STDERR')
-sl = StreamToLogger(stderr_logger, logging.ERROR)
-sys.stderr = sl
+# sl = StreamToLogger(stderr_logger, logging.ERROR)
+# sys.stderr = sl
 logger.debug("Starting Run.")
 ozma.main()

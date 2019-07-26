@@ -40,3 +40,5 @@ def get_media_types():
     with open(os.path.join(os.path.dirname(__file__), "media_extensions.json"), 'r') as f:
         types = json.load(f)
     return types
+
+

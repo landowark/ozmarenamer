@@ -8,7 +8,7 @@ import logging
 from plexapi.server import PlexServer
 import datetime
 from .tools import transmission
-
+from .setup.custom_loggers import GroupWriteRotatingFileHandler
 
 logger = logging.getLogger("ozma.parser")
 

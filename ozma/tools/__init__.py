@@ -9,6 +9,7 @@ import shutil
 logger = logging.getLogger("ozma.tools")
 strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED", "DVDRip", "HC",
               "HDRip", "XviD", "AC3", "BRRip"]
+rejected_filenames = ['sample']
 
 def split_file_name(filepath):
     return os.path.basename(filepath)
@@ -92,6 +93,9 @@ def get_parsible_file_name(filepath):
     # print("Post year: {}".format(filename))
     filename = " ".join(wn.split(filename)).title()
     if year: filename = "{filename} ({year})".format(filename=filename, year=year)
+    if filename.lower() in rejected_filenames:
+        logger.warning("Found a rejected filename: {}. Disregarding.".format(filename))
+        filename = None
     logger.debug("Using filename={}, season={}, episode={}, disc={}".format(filename, str(season), str(episode), str(disc)))
     return filename, season, episode, disc
 

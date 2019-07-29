@@ -54,23 +54,25 @@ class MediaManager():
             self.extension = get_extension(filepath)
             mediatype = get_media_type(self.extension)
             self.filename, self.season, self.episode, self.disc = get_parsible_file_name(filepath)
-            if mediatype == 'video':
-                if self.season:
-                    mediatype = 'tv'
-                else:
-                    mediatype = 'movies'
-            logger.debug("Setting media type as {}.".format(mediatype))
-            func = FUNCTION_MAP[mediatype]
-            func()
-            self.final_filename = self.final_filename.replace(":", "-")
-            rsync_mkdirs = os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
-                                             os.path.split(self.final_filename)[0])
-            rsync_mkdirs = rsync_mkdirs.replace("(", "\\(")
-            rsync_mkdirs = rsync_mkdirs.replace(")", "\\)")
-            rsync_target = self.settings['rsync_schema'].format(media_type=mediatype) + self.final_filename
-            rsync_target = rsync_target.replace("(", "\\(")
-            rsync_target = rsync_target.replace(")", "\\)")
-            self.mediaobjs.append(MediaObject(filepath, rsync_mkdirs, rsync_target, self.settings['rsync_user'], self.settings['rsync_pass']))
+            # Ensure that a filename exists.
+            if self.filename:
+                if mediatype == 'video':
+                    if self.season:
+                        mediatype = 'tv'
+                    else:
+                        mediatype = 'movies'
+                logger.debug("Setting media type as {}.".format(mediatype))
+                func = FUNCTION_MAP[mediatype]
+                func()
+                self.final_filename = self.final_filename.replace(":", "-")
+                rsync_mkdirs = os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
+                                                 os.path.split(self.final_filename)[0])
+                rsync_mkdirs = rsync_mkdirs.replace("(", "\\(")
+                rsync_mkdirs = rsync_mkdirs.replace(")", "\\)")
+                rsync_target = self.settings['rsync_schema'].format(media_type=mediatype) + self.final_filename
+                rsync_target = rsync_target.replace("(", "\\(")
+                rsync_target = rsync_target.replace(")", "\\)")
+                self.mediaobjs.append(MediaObject(filepath, rsync_mkdirs, rsync_target, self.settings['rsync_user'], self.settings['rsync_pass']))
 
 
     def search_book(self):

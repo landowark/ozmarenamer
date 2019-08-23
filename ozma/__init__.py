@@ -1,16 +1,16 @@
 from subprocess import Popen, PIPE, STDOUT
 import sys
-from .setup import get_config, get_params, get_filepath, get_media_types
+from pytvdbapi.error import TVDBIndexError
+from .setup import get_config, get_cliarg, get_filepath, get_media_types, setup_logger
 from .tools import *
 from pytvdbapi import api
 from imdb import IMDb
-import logging
 from plexapi.server import PlexServer
 import datetime
 from .tools import transmission
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 
-logger = logging.getLogger("ozma.parser")
+logger = setup_logger()
 
 def rreplace(s, old, new, occurrence):
      li = s.rsplit(old, occurrence)
@@ -29,9 +29,9 @@ class MediaObject():
 
 class MediaManager():
 
-    def __init__(self):
-        self.settings = dict(**get_params(), **get_config())
-        self.filepath = get_filepath()
+    def __init__(self, filepath):
+        self.settings = dict(**get_config())
+        self.filepath = filepath
         self.mediaobjs = []
 
     def parse_file(self, filepath):
@@ -85,6 +85,10 @@ class MediaManager():
         tvdb = api.TVDB(tvdb_apikey)
         try:
             series = tvdb.search(self.filename, self.settings['main_language'])[0]
+        except TVDBIndexError:
+            series = ''
+            logger.error("Looks like no result was found")
+        try:
             # make sure dir created by pytvdbapi is useable by all in group
             logger.debug('Making sure dir created by pytvdbapi is useable by all in group')
             return_code = change_permission('/tmp/pytvdbapi')
@@ -140,13 +144,17 @@ class MediaManager():
         sys.exit("No functionality.")
 
 
-def main():
-    mParser = MediaManager()
+def main(filepath=""):
+    mParser = MediaManager(filepath)
     mParser.parse_file(mParser.filepath)
     for file in mParser.mediaobjs:
         if os.path.isfile(file.source_file):
             logger.debug("Moving {} to {}.".format(file.source_file, file.destination_file))
-            returncode = run_rsync(file)
+            if os.uname().nodename != 'landons-laptop':
+                returncode = run_rsync(file)
+            else:
+                logger.debug("No sync on testing platform.")
+                returncode = 1
             if returncode == 0:
                 logger.debug("rsync successful.")
                 try:
@@ -155,6 +163,8 @@ def main():
                     plex.library.update()
                 except Exception as e:
                     logger.error(e)
+            elif returncode == 1:
+                logger.error("Sync not run.")
             else:
                 logger.error("Problem with rsync.")
         else:

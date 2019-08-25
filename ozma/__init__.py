@@ -134,7 +134,7 @@ class MediaManager():
             year_of_release = year_of_release,
             extension = self.extension
         )
-        if not split and self.settings['extras']:
+        if not split and "extras" in  self.settings:
             logger.debug("We want extras!")
 
 

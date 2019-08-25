@@ -47,7 +47,7 @@ if __name__ == "__main__":
 
     # Start the observer
     my_observer.start()
-    logger.info("Ozma watcher has started.")
+    logger.info("Ozma watcher has started on {}.".format(path))
     try:
         while True:
             time.sleep(1)

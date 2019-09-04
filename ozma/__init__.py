@@ -98,7 +98,11 @@ class MediaManager():
                 logger.error("Problem with chmod")
         except PermissionError as e:
             logger.error("Permission error for {}".format(e.filename))
-        series_name = move_article_to_end(series.SeriesName)
+        try:
+            series_name = move_article_to_end(series.SeriesName)
+        except AttributeError as e:
+            logger.debug("Can't use that as a series name.")
+            series_name = move_article_to_end(series)
         if isinstance(self.season, datetime.date):
             logger.debug("Season given as date, using search by date: {}.".format(self.season))
             temp_episode = series.api.get_episode_by_air_date(language=self.settings['main_language'], air_date=self.season, series_id=series.seriesid)

@@ -43,11 +43,10 @@ def get_parsible_file_name(filepath):
     # print("Post strip list: {}".format(filename))
     season = get_season(filename)
     episode = get_episode(filename)
+    logger.debug(f"Season: {season}, Episode: {episode}")
     if season and episode:
         seasep = season + episode
-
-    logger.debug(f"Season: {season}, Episode: {episode}")
-    logger.debug(f"Seasep = {seasep}")
+        logger.debug(f"Seasep = {seasep}")
     if not season and not episode:
         logger.debug("No season or episode found. Attempting dxdd method.")
         # print("No season or episode found. Attempting dxdd method.")

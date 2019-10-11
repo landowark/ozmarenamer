@@ -179,6 +179,7 @@ def main(filepath=""):
 
 def run_rsync(file):
     os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
     process = Popen([
         'linux_scripts/rsync.sh',
         file.source_file,

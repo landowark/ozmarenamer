@@ -47,17 +47,17 @@ def get_parsible_file_name(filepath):
     if season and episode:
         seasep = season + episode
         logger.debug(f"Seasep = {seasep}")
+        filename = filename.split(seasep)[0].strip()
     if not season and not episode:
         logger.debug("No season or episode found. Attempting dxdd method.")
         # print("No season or episode found. Attempting dxdd method.")
         season, episode = get_season_episode_dxdd(filename)
         if season and episode:
             seasep = f"{season}x{episode}"
+            filename = filename.split(seasep)[0].strip()
         # filename = filename.replace("{}x{}".format(season, episode), "")
         # filename = filename.replace("{}x{}".format(season, episode), "")
     # print("Post dxdd method: {}".format(filename))
-    if seasep:
-        filename = filename.split(seasep)[0].strip()
     if not season and not episode:
         logger.debug("No season or episode found. Attempting date method.")
         # print("No season or episode found. Attempting date method.")

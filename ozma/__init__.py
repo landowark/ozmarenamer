@@ -197,6 +197,6 @@ def run_rsync(file):
 def change_permission(directory):
     process = Popen(['chmod', "-R", "770", directory], stdout=PIPE, stderr=STDOUT)
     if process.stderr != None:
-        logger.error(process.stderr)
+        logger.error(f"Problem in change_permission def: {process.stderr}")
     process.communicate()
     return process.returncode

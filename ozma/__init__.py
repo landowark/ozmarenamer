@@ -1,6 +1,6 @@
 from subprocess import Popen, PIPE, STDOUT
 import sys
-from pytvdbapi.error import TVDBIndexError
+from pytvdbapi.error import TVDBIndexError, ConnectionError
 from .setup import get_config, get_cliarg, get_filepath, get_media_types, setup_logger
 from .tools import *
 from pytvdbapi import api
@@ -82,7 +82,11 @@ class MediaManager():
 
     def search_tv(self):
         tvdb_apikey = self.settings['thetvdbkey']
-        tvdb = api.TVDB(tvdb_apikey)
+        try:
+            tvdb = api.TVDB(tvdb_apikey)
+        except ConnectionError:
+            series = ""
+            logger.error("TVDB did not connect.")
         try:
             series = tvdb.search(self.filename, self.settings['main_language'])[0]
         except TVDBIndexError:

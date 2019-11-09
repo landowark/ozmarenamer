@@ -1,14 +1,17 @@
 from subprocess import Popen, PIPE, STDOUT
 import sys
 from pytvdbapi.error import TVDBIndexError, ConnectionError
+
 from .setup import get_config, get_cliarg, get_filepath, get_media_types, setup_logger
 from .tools import *
 from pytvdbapi import api
 from imdb import IMDb
+from imdb.Movie import Movie
 from plexapi.server import PlexServer
 import datetime
-from .tools import transmission
+from .tools import transmission, tv_wikipedia
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
+
 
 logger = setup_logger()
 
@@ -90,8 +93,15 @@ class MediaManager():
         try:
             series = tvdb.search(self.filename, self.settings['main_language'])[0]
         except TVDBIndexError:
-            series = ''
             logger.error("Looks like no result was found")
+            logger.debug("Falling back to IMDB")
+            ai = IMDb()
+            series = ai.search_movie(self.filename)[0]
+        except UnboundLocalError:
+            logger.error("Looks like TVDB was not found.")
+            logger.debug("Falling back to IMDB")
+            ai = IMDb()
+            series = ai.search_movie(self.filename)[0]
         try:
             # make sure dir created by pytvdbapi is useable by all in group
             logger.debug('Making sure dir created by pytvdbapi is useable by all in group')
@@ -102,9 +112,13 @@ class MediaManager():
                 logger.error("Problem with chmod")
         except PermissionError as e:
             logger.error("Permission error for {}".format(e.filename))
-        try:
+        if isinstance(series, api.Show):
+            logger.debug("Using TVDb for series name.")
             series_name = move_article_to_end(series.SeriesName)
-        except AttributeError as e:
+        elif isinstance(series, Movie):
+            logger.debug("Using IMDB for series name.")
+            series_name = move_article_to_end(series.data['title'])
+        else:
             logger.debug("Can't use that as a series name.")
             series_name = move_article_to_end(series)
         if isinstance(self.season, datetime.date):
@@ -113,7 +127,15 @@ class MediaManager():
             self.season = temp_episode.SeasonNumber
             self.episode = temp_episode.EpisodeNumber
         logger.debug("Found series {}.".format(series_name))
-        episode_name = series[self.season][self.episode].EpisodeName
+        if isinstance(series, api.Show):
+            logger.debug("Using TVDb for episode name.")
+            episode_name = series[self.season][self.episode].EpisodeName
+        elif isinstance(series, Movie):
+            logger.debug("Using Wikipedia for episode name.")
+            episode_name = tv_wikipedia(series_name, self.season, self.episode)
+        else:
+            logger.debug("Using Wikipedia for episode name.")
+            episode_name = tv_wikipedia(series_name, self.season, self.episode)
         logger.debug("Found episode {}".format(episode_name))
         self.final_filename = self.settings['tv_schema'].format(
             series_name=series_name,

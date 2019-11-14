@@ -35,7 +35,7 @@ if __name__ == "__main__":
     # Define what to do when some change occurs
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)
     my_event_handler.on_created = handle_file
-    # my_event_handler.on_modified = handle_file
+    my_event_handler.on_modified = handle_file
 
 
     # Create an observer

@@ -5,6 +5,7 @@ import os
 from configparser import ConfigParser, ExtendedInterpolation
 import random
 import re
+import logging
 
 
 config = ConfigParser(interpolation=ExtendedInterpolation())
@@ -19,6 +20,11 @@ playlist_name = config['settings']['playlist_name']
 
 wanted_shows = config['settings']['wanted_shows'].split(",")
 
+this_dir = os.path.abspath(os.path.dirname(__file__))
+episode_file = "potential_episodes.txt"
+
+logger = logging.getLogger("ozma.plex_randomizer")
+
 
 def delete_old_playlist():
     try:
@@ -28,31 +34,33 @@ def delete_old_playlist():
 
 
 
-def get_five_random_episodes(episodes:list) -> list:
+def get_five_random_episodes(episodes:list):
     to_add = []
     for iii in range(5):
         choice = random.choice(episodes)
         episodes.remove(choice)
         to_add.append(choice.rstrip("\n"))
     playlist = [get_episode_by_SXXEXX(item) for item in to_add]
-    return playlist
+    return playlist, episodes
 
 
-def create_potential_episodes():
+def create_potential_episodes(filename:str=episode_file):
     episodes = [item for show in [show for show in tv.searchShows() if show.title in wanted_shows] for item in
                 show.episodes()]
     episodes = ['{}:{}\n'.format(item.show().title, item.seasonEpisode) for item in episodes]
-    write_list_to_file(episodes)
+    write_list_to_file(episodes, filename=filename)
 
 
-def read_episodes_from_file(filename:str="potential_episodes.txt") -> list:
-    with open(filename, 'r') as f:
+def read_episodes_from_file(filename:str=episode_file) -> list:
+    infile = os.path.join(this_dir, filename)
+    with open(infile, 'r') as f:
         episodes = f.read().splitlines()
     return episodes
 
 
-def write_list_to_file(episode_list:list, filename:str="potential_episodes.txt"):
-    with open(filename, 'w') as f:
+def write_list_to_file(episode_list:list, filename:str=episode_file):
+    outfile = os.path.join(this_dir, filename)
+    with open(outfile, 'w') as f:
         for item in episode_list:
             f.write(item)
 
@@ -76,10 +84,15 @@ if __name__ == "__main__":
     try:
         episodes = read_episodes_from_file()
     except FileNotFoundError:
+        logger.error("Master episode file not found. Creating new one.")
         create_potential_episodes()
         episodes = read_episodes_from_file()
     if len(episodes) < 5:
+        logger.error("Master episode file is too short. Creating new one.")
         create_potential_episodes()
         episodes = read_episodes_from_file()
-    playlist = get_five_random_episodes(episodes)
+    playlist, episodes = get_five_random_episodes(episodes)
+    print(f"Your playlist is: {playlist}")
+    logger.debug(f"Your playlist is: {playlist}")
+    write_list_to_file([item + "\n" for item in episodes])
     create_new_playlist(playlist)

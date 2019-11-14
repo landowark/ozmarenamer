@@ -92,7 +92,6 @@ if __name__ == "__main__":
         create_potential_episodes()
         episodes = read_episodes_from_file()
     playlist, episodes = get_five_random_episodes(episodes)
-    print(f"Your playlist is: {playlist}")
     logger.debug(f"Your playlist is: {playlist}")
     write_list_to_file([item + "\n" for item in episodes])
     create_new_playlist(playlist)

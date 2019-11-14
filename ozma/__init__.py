@@ -14,6 +14,7 @@ from .setup.custom_loggers import GroupWriteRotatingFileHandler
 
 
 logger = setup_logger()
+config = dict(**get_config())
 
 def rreplace(s, old, new, occurrence):
      li = s.rsplit(old, occurrence)
@@ -33,7 +34,7 @@ class MediaObject():
 class MediaManager():
 
     def __init__(self, filepath):
-        self.settings = dict(**get_config())
+        self.settings = config
         self.filepath = filepath
         self.mediaobjs = []
 

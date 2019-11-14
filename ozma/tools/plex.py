@@ -6,19 +6,16 @@ from configparser import ConfigParser, ExtendedInterpolation
 import random
 import re
 import logging
+from ozma import config
 
 
-config = ConfigParser(interpolation=ExtendedInterpolation())
-settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'settings.ini')
-config.read(settings_path)
-
-plex_url = config['settings']['plex_url']
-plex_token = config['settings']['plex_token']
+plex_url = config['plex_url']
+plex_token = config['plex_token']
 plex = PlexServer(plex_url, plex_token)
 tv = plex.library.section("TV Shows")
-playlist_name = config['settings']['playlist_name']
+playlist_name = config['playlist_name']
 
-wanted_shows = config['settings']['wanted_shows'].split(",")
+wanted_shows = config['wanted_shows'].split(",")
 
 this_dir = os.path.abspath(os.path.dirname(__file__))
 episode_file = "potential_episodes.txt"
@@ -31,7 +28,6 @@ def delete_old_playlist():
         plex.playlist(playlist_name).delete()
     except NotFound:
         pass
-
 
 
 def get_five_random_episodes(episodes:list):

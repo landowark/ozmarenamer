@@ -184,4 +184,6 @@ def remove_temp_files():
 
 def escape_specials(input:str) -> str:
     specials = ["&", " ", "'"]
-    return "".join([input.replace(special, f"\{special}") for special in specials])
+    for special in specials:
+        input = input.replace(special, f"\\{special}")
+    return input

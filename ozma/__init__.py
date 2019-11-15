@@ -210,8 +210,10 @@ def run_rsync(file):
     process = Popen([
         'linux_scripts/rsync.sh',
         file.source_file,
-        file.destination_dir.replace(" ", "\\ ").replace("'", "\\'"),
-        file.destination_file.replace(" ", "\\ ").replace("'", "\\'"),
+        # file.destination_dir.replace(" ", "\\ ").replace("'", "\\'"),
+        # file.destination_file.replace(" ", "\\ ").replace("'", "\\'"),
+        escape_specials(file.destination_dir),
+        escape_specials(file.destination_file),
         file.rsync_user,
         file.rsync_pass
     ], stdout=PIPE, stderr=STDOUT)

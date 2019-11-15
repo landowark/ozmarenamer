@@ -180,3 +180,8 @@ def extract_files_if_folder(dir_path):
 def remove_temp_files():
     logger.debug("Removing temporary files.")
     shutil.rmtree("/tmp/pytvdbapi", ignore_errors=True)
+
+
+def escape_specials(input:str) -> str:
+    specials = ["&", " ", "'"]
+    return "".join([input.replace(special, f"\{special}") for special in specials])

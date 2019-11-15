@@ -27,10 +27,10 @@ def handle_file(event):
 if __name__ == "__main__":
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     # Create an event handler
-    patterns = ["*." + item for item in get_allowed_extensions()]
+    patterns = [f"*.{item}" for item in get_allowed_extensions()]
     ignore_patterns = ""
     ignore_directories = False
-    case_sensitive = True
+    case_sensitive = False
 
     # Define what to do when some change occurs
     my_event_handler = PatternMatchingEventHandler(patterns, ignore_patterns, ignore_directories, case_sensitive)

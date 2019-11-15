@@ -36,7 +36,8 @@ def get_parsible_file_name(filepath):
     # remove season number
     filename = remove_extension(split_file_name(filepath))
     filename = filename.replace(".", " ")
-    filename = re.sub(re.compile(r'\[.*\]'), "", filename)
+    # non-greedy regex to remove things in square brackets
+    filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
     for word in strip_list:
         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
         filename = re.sub(regex, "", filename)

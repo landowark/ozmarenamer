@@ -133,10 +133,10 @@ class MediaManager():
             episode_name = series[self.season][self.episode].EpisodeName
         elif isinstance(series, Movie):
             logger.debug("Using Wikipedia for episode name.")
-            episode_name = tv_wikipedia(series_name, self.season, self.episode)
+            episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode)
         else:
             logger.debug("Using Wikipedia for episode name.")
-            episode_name = tv_wikipedia(series_name, self.season, self.episode)
+            episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode)
         logger.debug("Found episode {}".format(episode_name))
         self.final_filename = self.settings['tv_schema'].format(
             series_name=series_name,

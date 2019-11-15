@@ -28,6 +28,7 @@ def remove_ratioed_torrents():
                     file_path = os.path.join(completed_dir, torrent.files()[item]['name'])
                     if os.path.exists(file_path):
                         try:
+                            logger.debug(f"Trying to remove {file_path}")
                             os.remove(file_path)
                         except Exception as e:
                             logger.error(f"Couldn't remove file: {file_path} because {e}")

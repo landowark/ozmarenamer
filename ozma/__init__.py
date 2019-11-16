@@ -1,20 +1,21 @@
 from subprocess import Popen, PIPE, STDOUT
 import sys
 from pytvdbapi.error import TVDBIndexError, ConnectionError
-
-from .setup import get_config, get_cliarg, get_filepath, get_media_types, setup_logger
-from .tools import *
+import os
+from .setup import get_config, get_filepath, get_media_types, setup_logger
 from pytvdbapi import api
 from imdb import IMDb
 from imdb.Movie import Movie
 from plexapi.server import PlexServer
 import datetime
-from .tools import transmission, tv_wikipedia
+
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 
 
 logger = setup_logger()
 config = dict(**get_config())
+
+from .tools import transmission, tv_wikipedia, img_scraper, get_extension, get_media_type, get_parsible_file_name, move_article_to_end, escape_specials, extract_files_if_folder
 
 def rreplace(s, old, new, occurrence):
      li = s.rsplit(old, occurrence)
@@ -33,10 +34,11 @@ class MediaObject():
 
 class MediaManager():
 
-    def __init__(self, filepath):
+    def __init__(self, filepath:str, extras:bool):
         self.settings = config
         self.filepath = filepath
         self.mediaobjs = []
+        self.extras = extras
 
     def parse_file(self, filepath):
         FUNCTION_MAP = {"book": self.search_book,
@@ -68,15 +70,17 @@ class MediaManager():
                 logger.debug("Setting media type as {}.".format(mediatype))
                 func = FUNCTION_MAP[mediatype]
                 func()
-                self.final_filename = self.final_filename.replace(":", "-")
-                rsync_mkdirs = os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
-                                                 os.path.split(self.final_filename)[0])
-                rsync_mkdirs = rsync_mkdirs.replace("(", "\\(")
-                rsync_mkdirs = rsync_mkdirs.replace(")", "\\)")
-                rsync_target = self.settings['rsync_schema'].format(media_type=mediatype) + self.final_filename
-                rsync_target = rsync_target.replace("(", "\\(")
-                rsync_target = rsync_target.replace(")", "\\)")
-                self.mediaobjs.append(MediaObject(filepath, rsync_mkdirs, rsync_target, self.settings['rsync_user'], self.settings['rsync_pass']))
+                self.final_filename = self.final_filename.replace(":", "-").replace('"', '')
+                rsync_mkdirs = escape_specials(os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
+                                                 os.path.split(self.final_filename)[0]))
+                rsync_target = escape_specials(self.settings['rsync_schema'].format(media_type=mediatype) + self.final_filename)
+                new_medObj = MediaObject(filepath, rsync_mkdirs, rsync_target, self.settings['rsync_user'], self.settings['rsync_pass'])
+                if self.extras:
+                    logger.debug("Extras requested.")
+                    new_medObj.extra_files = img_scraper.search_for_images(" ".join(os.path.splitext(os.path.basename(self.final_filename))[0].split(".")[:-1]))
+                else:
+                    logger.debug("Extras not requested.")
+                self.mediaobjs.append(new_medObj)
 
 
     def search_book(self):
@@ -133,10 +137,10 @@ class MediaManager():
             episode_name = series[self.season][self.episode].EpisodeName
         elif isinstance(series, Movie):
             logger.debug("Using Wikipedia for episode name.")
-            episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode)
+            episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace('"', '')
         else:
             logger.debug("Using Wikipedia for episode name.")
-            episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode)
+            episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace('"', '')
         logger.debug("Found episode {}".format(episode_name))
         self.final_filename = self.settings['tv_schema'].format(
             series_name=series_name,
@@ -145,6 +149,7 @@ class MediaManager():
             episode_name=episode_name,
             extension=self.extension
         )
+        logger.debug(f"Using {self.final_filename} as final file name.")
 
 
     def search_movie(self):
@@ -175,8 +180,10 @@ class MediaManager():
         sys.exit("No functionality.")
 
 
-def main(filepath=""):
-    mParser = MediaManager(filepath)
+def main(*args):
+    filepath = args[0]['filename']
+    extras = args[0]['extras']
+    mParser = MediaManager(filepath, extras=extras)
     mParser.parse_file(mParser.filepath)
     for file in mParser.mediaobjs:
         if os.path.isfile(file.source_file):

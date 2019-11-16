@@ -8,4 +8,5 @@ logger = logging.getLogger("ozma.cli")
 
 logger.debug("Command line called.")
 params = get_cliarg()
-ozma.main(filepath=params['filename'])
+logger.debug(f"Command line parameters: {params}")
+ozma.main(params)

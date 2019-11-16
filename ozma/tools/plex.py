@@ -6,8 +6,12 @@ from configparser import ConfigParser, ExtendedInterpolation
 import random
 import re
 import logging
-from ozma import config
+import os
 
+cParser = ConfigParser(interpolation=ExtendedInterpolation())
+settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'settings.ini')
+cParser.read(settings_path)
+config = {s:dict(cParser.items(s)) for s in cParser.sections()}['settings']
 
 plex_url = config['plex_url']
 plex_token = config['plex_token']

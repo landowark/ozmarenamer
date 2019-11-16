@@ -185,6 +185,7 @@ def main(*args):
     extras = args[0]['extras']
     mParser = MediaManager(filepath, extras=extras)
     mParser.parse_file(mParser.filepath)
+    rsync_trigger = False
     for file in mParser.mediaobjs:
         if os.path.isfile(file.source_file):
             logger.debug("Moving {} to {}.".format(file.source_file, file.destination_file))
@@ -195,12 +196,7 @@ def main(*args):
                 returncode = 1
             if returncode == 0:
                 logger.debug("rsync successful.")
-                try:
-                    logger.debug("Updating Plex library.")
-                    plex = PlexServer(mParser.settings['plex_url'], mParser.settings['plex_token'])
-                    plex.library.update()
-                except Exception as e:
-                    logger.error(e)
+                rsync_trigger = True
             elif returncode == 1:
                 logger.error("Sync not run.")
             else:
@@ -208,7 +204,13 @@ def main(*args):
         else:
             logger.error("{} is not a real file.".format(mParser.filepath))
     transmission.remove_ratioed_torrents()
-    # remove_temp_files()
+    if rsync_trigger:
+        try:
+            logger.debug("Updating Plex library.")
+            plex = PlexServer(mParser.settings['plex_url'], mParser.settings['plex_token'])
+            plex.library.update()
+        except Exception as e:
+            logger.error(e)
 
 
 def run_rsync(file):

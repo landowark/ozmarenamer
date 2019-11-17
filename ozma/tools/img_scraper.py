@@ -5,7 +5,7 @@ import tempfile
 import os
 from ozma import config
 
-def search_for_images(search_str:str, number:int=10) -> list:
+def google_search_for_images(search_str:str, number:int=10) -> list:
     search_params = {"q":search_str, 'num':number}
     gis = GoogleImagesSearch(config['google_api_key'], config['google_cx'])
     gis.search(search_params=search_params)

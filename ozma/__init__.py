@@ -77,7 +77,7 @@ class MediaManager():
                 new_medObj = MediaObject(filepath, rsync_mkdirs, rsync_target, self.settings['rsync_user'], self.settings['rsync_pass'])
                 if self.extras:
                     logger.debug("Extras requested.")
-                    new_medObj.extra_files = img_scraper.search_for_images(" ".join(os.path.splitext(os.path.basename(self.final_filename))[0].split(".")[:-1]))
+                    new_medObj.extra_files = img_scraper.google_search_for_images(" ".join(os.path.splitext(os.path.basename(self.final_filename))[0].split(".")[:-1]))
                 else:
                     logger.debug("Extras not requested.")
                 self.mediaobjs.append(new_medObj)
@@ -134,7 +134,12 @@ class MediaManager():
         logger.debug("Found series {}.".format(series_name))
         if isinstance(series, api.Show):
             logger.debug("Using TVDb for episode name.")
-            episode_name = series[self.season][self.episode].EpisodeName
+            try:
+                episode_name = series[self.season][self.episode].EpisodeName
+            except KeyError as e:
+                logger.error(f"Problem using TVDB for episode name: {e}")
+                episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace(
+                    '"', '')
         elif isinstance(series, Movie):
             logger.debug("Using Wikipedia for episode name.")
             episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace('"', '')
@@ -181,6 +186,7 @@ class MediaManager():
 
 
 def main(*args):
+    logger.debug(f"Running main with arguments: {args}")
     filepath = args[0]['filename']
     extras = args[0]['extras']
     mParser = MediaManager(filepath, extras=extras)
@@ -189,16 +195,12 @@ def main(*args):
     for file in mParser.mediaobjs:
         if os.path.isfile(file.source_file):
             logger.debug("Moving {} to {}.".format(file.source_file, file.destination_file))
-            if os.uname().nodename != 'landons-laptop':
-                returncode = run_rsync(file)
-            else:
-                logger.debug("No sync on testing platform.")
-                returncode = 1
+            returncode = run_rsync(file, mParser.extras)
             if returncode == 0:
                 logger.debug("rsync successful.")
                 rsync_trigger = True
             elif returncode == 1:
-                logger.error("Sync not run.")
+                logger.debug("No sync on testing platform.")
             else:
                 logger.error("Problem with rsync.")
         else:
@@ -213,24 +215,56 @@ def main(*args):
             logger.error(e)
 
 
-def run_rsync(file):
-    os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+def run_rsync(file, extras:bool=False):
+    print(extras)
+    main_return = rsync_runner(escape_specials(file.source_file),
+                                escape_specials(file.destination_dir),
+                                escape_specials(file.destination_file),
+                                file.rsync_user,
+                                file.rsync_pass
+                              )
+    if main_return == 0 or main_return == 1:
+        logger.debug("Rsync ran successfully for main file.")
+        if extras == True:
+            for item in file.extra_files:
+                print(item, escape_specials(file.destination_dir), escape_specials(os.path.basename(item)))
+                extra_return = rsync_runner(item,
+                                            escape_specials(file.destination_dir),
+                                            escape_specials(os.path.basename(item)),
+                                            file.rsync_user,
+                                            file.rsync_pass
+                                           )
+                if extra_return == 0:
+                    logger.debug(f"Rsync ran successfully for {item}")
+                elif extra_return == 1:
+                    logger.debug(f"No sync for {item} on testing platform.")
+                else:
+                    logger.error(f"Error running rsync on {item}")
+    return main_return
 
-    process = Popen([
-        'linux_scripts/rsync.sh',
-        file.source_file,
-        # file.destination_dir.replace(" ", "\\ ").replace("'", "\\'"),
-        # file.destination_file.replace(" ", "\\ ").replace("'", "\\'"),
-        escape_specials(file.destination_dir),
-        escape_specials(file.destination_file),
-        file.rsync_user,
-        file.rsync_pass
-    ], stdout=PIPE, stderr=STDOUT)
-    logger.debug(process.stdout.read())
-    if process.stderr != None:
-        logger.error(process.stderr)
-    process.communicate()
-    return process.returncode
+
+def rsync_runner(source_file:str, destination_dir:str, destination_file:str, rsync_user:str, rsync_pass:str) -> int:
+    if os.uname().nodename != 'landons-laptop':
+        os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        process = Popen([
+            'linux_scripts/rsync.sh',
+            source_file,
+            # file.destination_dir.replace(" ", "\\ ").replace("'", "\\'"),
+            # file.destination_file.replace(" ", "\\ ").replace("'", "\\'"),
+            # escape_specials(file.destination_dir),
+            # escape_specials(file.destination_file),
+            destination_dir,
+            destination_file,
+            rsync_user,
+            rsync_pass
+        ], stdout=PIPE, stderr=STDOUT)
+        logger.debug(process.stdout.read())
+        if process.stderr != None:
+            logger.error(process.stderr)
+        process.communicate()
+        return process.returncode
+    else:
+        return 1
 
 def change_permission(directory):
     process = Popen(['chmod', "-R", "770", directory], stdout=PIPE, stderr=STDOUT)

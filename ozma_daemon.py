@@ -21,7 +21,7 @@ config = get_config()
 
 def handle_file(event):
     logger.debug("Event triggered for {}".format(event.src_path))
-    main(filename=event.src_path, extras=True)
+    main(filename=event.src_path)
 
 
 if __name__ == "__main__":

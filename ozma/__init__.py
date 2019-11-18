@@ -8,6 +8,7 @@ from imdb import IMDb
 from imdb.Movie import Movie
 from plexapi.server import PlexServer
 import datetime
+import re
 
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 
@@ -90,6 +91,7 @@ class MediaManager():
 
     def search_tv(self):
         tvdb_apikey = self.settings['thetvdbkey']
+        print(self.filename)
         try:
             tvdb = api.TVDB(tvdb_apikey)
         except ConnectionError:
@@ -128,7 +130,8 @@ class MediaManager():
             series_name = move_article_to_end(series)
         if isinstance(self.season, datetime.date):
             logger.debug("Season given as date, using search by date: {}.".format(self.season))
-            temp_episode = series.api.get_episode_by_air_date(language=self.settings['main_language'], air_date=self.season, series_id=series.seriesid)
+            print(self.settings['main_language'], self.season, series.seriesid)
+            temp_episode = series.api.get_episode_by_air_date(language=self.settings['main_language'], air_date=self.season, series_id=series.id)
             self.season = temp_episode.SeasonNumber
             self.episode = temp_episode.EpisodeNumber
         logger.debug("Found series {}.".format(series_name))
@@ -216,13 +219,19 @@ def main(*args):
 
 
 def run_rsync(file, extras:bool=False):
-    print(extras)
+    print(escape_specials(file.source_file), escape_specials(file.destination_dir), escape_specials(file.destination_file), file.rsync_user, file.rsync_pass)
+    # main_return = rsync_runner(escape_specials(file.source_file),
+    #                             escape_specials(file.destination_dir),
+    #                             escape_specials(file.destination_file),
+    #                             file.rsync_user,
+    #                             file.rsync_pass
+    #                           )
     main_return = rsync_runner(escape_specials(file.source_file),
-                                escape_specials(file.destination_dir),
-                                escape_specials(file.destination_file),
-                                file.rsync_user,
-                                file.rsync_pass
-                              )
+                               file.destination_dir,
+                               file.destination_file,
+                               file.rsync_user,
+                               file.rsync_pass
+                               )
     if main_return == 0 or main_return == 1:
         logger.debug("Rsync ran successfully for main file.")
         if extras == True:

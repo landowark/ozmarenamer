@@ -2,16 +2,17 @@ import wikipedia as wkp
 import requests
 from bs4 import BeautifulSoup as bs
 import logging
+import datetime
 
 logger = logging.getLogger("ozma.tv_wikipedia")
 
 
-def wikipedia_tv_episode_search(show: str, season: int, episode: int):
+def wikipedia_tv_episode_search(show: str, season, episode: int):
     page = wkp.page(wkp.search(f"List of {show} episodes")[0])
     # The Simpsons required two wikipedia pages... so...
     if show == "Simpsons, The" and season <=20:
         url = page.url + "_(seasons_1–20)#Episodes"
-    elif show == "Daily Show, The":
+    elif show == "Daily Show, The" or isinstance(season, datetime.date):
         # Need to build some functionality for this one.
         return "_"
     else:

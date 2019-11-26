@@ -1,6 +1,6 @@
 from subprocess import Popen, PIPE, STDOUT
 import sys
-from pytvdbapi.error import TVDBIndexError, ConnectionError
+from pytvdbapi.error import TVDBIndexError, ConnectionError, BadData
 import os
 from .setup import get_config, get_filepath, get_media_types, setup_logger
 from pytvdbapi import api
@@ -9,6 +9,7 @@ from imdb.Movie import Movie
 from plexapi.server import PlexServer
 import datetime
 import re
+import difflib
 
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 
@@ -97,7 +98,9 @@ class MediaManager():
             series = ""
             logger.error("TVDB did not connect.")
         try:
-            series = tvdb.search(self.filename, self.settings['main_language'])[0]
+            series = tvdb.search(self.filename, self.settings['main_language'])
+            series = [item for item in series if
+             item.SeriesName in difflib.get_close_matches(self.filename, [item.SeriesName for item in series], 1)][0]
         except TVDBIndexError:
             logger.error("Looks like no result was found")
             logger.debug("Falling back to IMDB")
@@ -129,9 +132,12 @@ class MediaManager():
             series_name = move_article_to_end(series)
         if isinstance(self.season, datetime.date):
             logger.debug("Season given as date, using search by date: {}.".format(self.season))
-            temp_episode = series.api.get_episode_by_air_date(language=self.settings['main_language'], air_date=self.season, series_id=series.id)
-            self.season = temp_episode.SeasonNumber
-            self.episode = temp_episode.EpisodeNumber
+            try:
+                temp_episode = series.api.get_episode_by_air_date(language=self.settings['main_language'], air_date=self.season, series_id=series.id)
+                self.season = temp_episode.SeasonNumber
+                self.episode = temp_episode.EpisodeNumber
+            except BadData as e:
+                logger.error("TVDB returned bad data.")
         logger.debug("Found series {}.".format(series_name))
         if isinstance(series, api.Show):
             logger.debug("Using TVDb for episode name.")
@@ -139,6 +145,10 @@ class MediaManager():
                 episode_name = series[self.season][self.episode].EpisodeName
             except KeyError as e:
                 logger.error(f"Problem using TVDB for episode name: {e}")
+                episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace(
+                    '"', '')
+            except ConnectionError as e:
+                logger.error(f"Connection error to tvdb: {e}")
                 episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace(
                     '"', '')
         elif isinstance(series, Movie):

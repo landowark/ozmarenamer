@@ -151,6 +151,10 @@ class MediaManager():
                 logger.error(f"Connection error to tvdb: {e}")
                 episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace(
                     '"', '')
+            except TVDBIndexError as e:
+                logger.error(f"Couldn't find episode: {e}")
+                episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace(
+                    '"', '')
         elif isinstance(series, Movie):
             logger.debug("Using Wikipedia for episode name.")
             episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace('"', '')

@@ -1,7 +1,7 @@
 #!/home/landon/Scripts/ozmarenamer/venv/bin/python
 
 from transmission_rpc import Client, DEFAULT_PORT
-from ..ozma.setup import get_config
+from ozma.setup import get_config
 import logging
 import os
 

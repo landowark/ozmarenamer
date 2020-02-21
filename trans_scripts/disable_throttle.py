@@ -1,9 +1,12 @@
 #!/home/landon/Scripts/ozmarenamer/venv/bin/python
 
+import sys
+sys.path.append("..") # Adds higher directory to python modules path.
 from transmission_rpc import Client, DEFAULT_PORT
 from ozma.setup import get_config
 import logging
 import os
+
 
 configs = get_config()
 logger = logging.getLogger("ozma.disable_throttle")

@@ -20,4 +20,6 @@ except Exception as e:
     logger.error(f"Error in finding completed dir in settings: {e}")
 
 logger.info(f"Disabling throttling...")
-c.session.alt_speed_enabled = False
+sess = c.session
+sess.alt_speed_enabled = False
+sess.update(timeout=None)

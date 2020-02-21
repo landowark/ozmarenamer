@@ -19,4 +19,6 @@ except Exception as e:
     logger.error(f"Error in finding completed dir in settings: {e}")
 
 logger.info(f"Enabling throttling...")
-c.session.alt_speed_enabled = True
+sess = c.session
+sess.alt_speed_enabled = True
+sess.update(timeout=None)

@@ -182,6 +182,7 @@ class MediaManager():
             logger.warning("Looks like IMDB didn't respond. Falling back to split.")
             split = True
             movie_list = re.split(r'\s\(', self.filename)
+            logger.debug(movie_list)
             movie = {'title': movie_list[0], 'year': movie_list[1].strip(")")}
         movie_name = movie['title']
         year_of_release = movie['year']
@@ -220,7 +221,10 @@ def main(*args):
                 logger.error("Problem with rsync.")
         else:
             logger.error("{} is not a real file.".format(mParser.filepath))
-    transmission.remove_ratioed_torrents()
+    try:
+        transmission.remove_ratioed_torrents()
+    except NameError:
+        pass
     if rsync_trigger:
         try:
             logger.debug("Updating Plex library.")

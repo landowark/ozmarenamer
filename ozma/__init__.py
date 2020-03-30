@@ -97,6 +97,9 @@ class MediaManager():
         except ConnectionError:
             series = ""
             logger.error("TVDB did not connect.")
+        except TimeoutError:
+            series = ""
+            logger.error("TVDB did not connect.")
         try:
             series = tvdb.search(self.filename, self.settings['main_language'])
             series = [item for item in series if

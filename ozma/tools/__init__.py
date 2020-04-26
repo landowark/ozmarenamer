@@ -8,7 +8,7 @@ import shutil
 
 logger = logging.getLogger("ozma.tools")
 strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED", "DVDRip", "HC",
-              "HDRip", "XviD", "AC3", "BRRip", "Bluray", "Internal"]
+              "HDRip", "XviD", "AC3", "BRRip", "Bluray", "Internal", "AAC"]
 rejected_filenames = ['sample']
 
 def split_file_name(filepath):

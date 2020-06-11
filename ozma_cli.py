@@ -1,3 +1,4 @@
+#!/home/landon/Scripts/ozmarenamer/venv/bin/python
 
 import ozma
 from ozma.setup import get_cliarg

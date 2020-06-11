@@ -108,6 +108,7 @@ class MediaManager():
             except IndexError:
                 logger.error(f"Search came back empty. Resetting using plex to scrape series and retrying.")
                 series = [item for item in series if item.SeriesName in difflib.get_close_matches(self.filename, get_all_series_names(), 1)][0]
+                logger.debug(f"Series returned from plex: {series}")
                 series = tvdb.search(series, self.settings['main_language'])
                 series = [item for item in series if item.SeriesName in difflib.get_close_matches(self.filename, [item.SeriesName for item in series], 1)][0]
         except TVDBIndexError:

@@ -59,7 +59,9 @@ def read_episodes_from_file(filename:str=episode_file) -> list:
 
 
 def get_all_series_names() -> list:
-    return [series.title for series in tv.searchShows()]
+    results = [series.title for series in tv.searchShows()]
+    logger.debug(f"Results: {results}")
+    return results
 
 
 

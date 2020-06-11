@@ -16,7 +16,7 @@ config = {s:dict(cParser.items(s)) for s in cParser.sections()}['settings']
 plex_url = config['plex_url']
 plex_token = config['plex_token']
 plex = PlexServer(plex_url, plex_token)
-tv = plex.library.section("TV Shows")
+tv = plex.library.section("TV")
 playlist_name = config['playlist_name']
 
 wanted_shows = config['wanted_shows'].split(",")
@@ -56,6 +56,11 @@ def read_episodes_from_file(filename:str=episode_file) -> list:
     with open(infile, 'r') as f:
         episodes = f.read().splitlines()
     return episodes
+
+
+def get_all_series_names() -> list:
+    return [series.title for series in tv.searchShows()]
+
 
 
 def write_list_to_file(episode_list:list, filename:str=episode_file):

@@ -10,6 +10,7 @@ from plexapi.server import PlexServer
 import datetime
 import re
 import difflib
+from .tools.plex import get_all_series_names
 
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 
@@ -102,8 +103,13 @@ class MediaManager():
             logger.error("TVDB did not connect.")
         try:
             series = tvdb.search(self.filename, self.settings['main_language'])
-            series = [item for item in series if
-             item.SeriesName in difflib.get_close_matches(self.filename, [item.SeriesName for item in series], 1)][0]
+            try:
+                series = [item for item in series if item.SeriesName in difflib.get_close_matches(self.filename, [item.SeriesName for item in series], 1)][0]
+            except IndexError:
+                logger.error(f"Search came back empty. Resetting using plex to scrape series and retrying.")
+                series = [item for item in series if item.SeriesName in difflib.get_close_matches(self.filename, get_all_series_names(), 1)][0]
+                series = tvdb.search(series, self.settings['main_language'])
+                series = [item for item in series if item.SeriesName in difflib.get_close_matches(self.filename, [item.SeriesName for item in series], 1)][0]
         except TVDBIndexError:
             logger.error("Looks like no result was found")
             logger.debug("Falling back to IMDB")

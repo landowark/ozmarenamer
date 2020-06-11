@@ -101,27 +101,7 @@ class MediaManager():
         except TimeoutError:
             series = ""
             logger.error("TVDB did not connect.")
-        try:
-            series = tvdb.search(self.filename, self.settings['main_language'])
-            logger.debug(f"Series search results: {[item.SeriesName for item in series]}")
-            try:
-                series = [item for item in series if item.SeriesName in difflib.get_close_matches(self.filename, [item.SeriesName for item in series], 1)][0]
-            except IndexError:
-                logger.error(f"Search on {series} came back empty. Sanitizing using plex to scrape series and retrying.")
-                series = difflib.get_close_matches(self.filename, get_all_series_names(), 1)[0]
-                logger.debug(f"Series returned from plex: {series}")
-                series = tvdb.search(series, self.settings['main_language'])
-                series = [item for item in series if item.SeriesName in difflib.get_close_matches(self.filename, [item.SeriesName for item in series], 1)][0]
-        except TVDBIndexError:
-            logger.error("Looks like no result was found")
-            logger.debug("Falling back to IMDB")
-            ai = IMDb()
-            series = ai.search_movie(self.filename)[0]
-        except UnboundLocalError:
-            logger.error("Looks like TVDB was not found.")
-            logger.debug("Falling back to IMDB")
-            ai = IMDb()
-            series = ai.search_movie(self.filename)[0]
+        series = self.parse_series_name(self.filename, tvdb)
         try:
             # make sure dir created by pytvdbapi is useable by all in group
             logger.debug('Making sure dir created by pytvdbapi is useable by all in group')
@@ -186,6 +166,32 @@ class MediaManager():
         )
         logger.debug(f"Using {self.final_filename} as final file name.")
 
+    def parse_series_name(self, series_name, tvdb):
+        try:
+            series_name = tvdb.search(series_name, self.settings['main_language'])
+            logger.debug(f"Series search results: {[item.SeriesName for item in series_name]}")
+            try:
+                series_name = [item for item in series_name if item.SeriesName in difflib.get_close_matches(self.filename,
+                                                                                                            [item.SeriesName for
+                                                                                                             item in series_name], 1)][
+                    0]
+            except IndexError:
+                logger.error(
+                    f"Search on {series_name} came back empty. Sanitizing using plex to scrape series and retrying.")
+                series_name = difflib.get_close_matches(self.filename, get_all_series_names(), 1)[0]
+                logger.debug(f"Series returned from plex: {series_name}")
+                self.parse_series_name(series_name, tvdb)
+        except TVDBIndexError:
+            logger.error("Looks like no result was found")
+            logger.debug("Falling back to IMDB")
+            ai = IMDb()
+            series_name = ai.search_movie(self.filename)[0]
+        except UnboundLocalError:
+            logger.error("Looks like TVDB was not found.")
+            logger.debug("Falling back to IMDB")
+            ai = IMDb()
+            series_name = ai.search_movie(self.filename)[0]
+        return series_name
 
     def search_movie(self):
         ai = IMDb()

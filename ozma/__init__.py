@@ -103,7 +103,7 @@ class MediaManager():
             logger.error("TVDB did not connect.")
         try:
             series = tvdb.search(self.filename, self.settings['main_language'])
-            logger.debug(f"Series search results: {series}")
+            logger.debug(f"Series search results: {[item.SeriesName for item in series]}")
             try:
                 series = [item for item in series if item.SeriesName in difflib.get_close_matches(self.filename, [item.SeriesName for item in series], 1)][0]
             except IndexError:

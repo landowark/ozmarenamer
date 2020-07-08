@@ -11,6 +11,8 @@ import datetime
 import re
 import difflib
 from .tools.plex import get_all_series_names
+from ssl import SSLCertVerificationError
+
 
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 
@@ -92,6 +94,7 @@ class MediaManager():
 
 
     def search_tv(self):
+        # TODO make use IMDB if tvdb fails.
         tvdb_apikey = self.settings['thetvdbkey']
         try:
             tvdb = api.TVDB(tvdb_apikey)
@@ -99,6 +102,9 @@ class MediaManager():
             series = ""
             logger.error("TVDB did not connect.")
         except TimeoutError:
+            series = ""
+            logger.error("TVDB did not connect.")
+        except SSLCertVerificationError:
             series = ""
             logger.error("TVDB did not connect.")
         series = self.parse_series_name(self.filename, tvdb)
@@ -206,6 +212,8 @@ class MediaManager():
             logger.debug(movie_list)
             movie = {'title': movie_list[0], 'year': movie_list[1].strip(")")}
         movie_name = movie['title']
+        # ensure 'the', 'an', 'a', etc is moved to the end of the movie name.
+        movie_name = move_article_to_end(movie_name)
         year_of_release = movie['year']
         self.final_filename = self.settings['movie_schema'].format(
             movie_name=movie_name,

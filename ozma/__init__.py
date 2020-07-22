@@ -73,31 +73,30 @@ class MediaManager():
                 func = FUNCTION_MAP[mediatype]
                 func()
                 self.final_filename = self.final_filename.replace(":", " -").replace('"', '')
-                rsync_mkdirs = escape_specials(os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
-                                                 os.path.split(self.final_filename)[0]))
-                if "@" in self.settings['destination_dir']:
-                    logger.debug(f"@ seen in {self.settings['destination_dir']}")
-                    try:
-                        logger.debug(f"Attempting to set {mediatype}_dir")
-                        rsync_target = escape_specials(self.settings[f'{mediatype}_dir'].format(media_type=mediatype) + self.final_filename)
-                        logger.debug(f"...{rsync_target}")
-                    except KeyError:
-                        logger.debug(f"{mediatype}_dir not found")
-                        rsync_target = escape_specials(
-                            self.settings['destination_dir'].format(media_type=mediatype) + self.final_filename)
-                        logger.debug(f"...{rsync_target}")
-                else:
-                    try:
-                        logger.debug(f"Attempting to set {mediatype}_dir")
-                        rsync_target = os.path.join(self.settings[f'{mediatype}_dir'].format(media_type=mediatype), self.final_filename)
-                        logger.debug(f"...{rsync_target}")
-                    except KeyError:
-                        logger.debug(f"{mediatype}_dir not found")
-                        rsync_target = os.path.join(self.settings['destination_dir'].format(media_type=mediatype),
-                                                    self.final_filename)
-                        logger.debug(f"...{rsync_target}")
-                logger.debug(f"Using {rsync_target}")
-                new_medObj = MediaObject(filepath, rsync_mkdirs, rsync_target, self.settings['rsync_user'], self.settings['rsync_pass'])
+                # rsync_mkdirs = escape_specials(os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
+                #                                  os.path.split(self.final_filename)[0]))
+                # if self.settings['destination_dir'][:3] == "smb":
+                #     logger.debug(f"smb seen in {self.settings['destination_dir']}. Using smb.")
+                try:
+                    logger.debug(f"Attempting to set {mediatype}_dir")
+                    _target = escape_specials(self.settings[f'{mediatype}_dir'].format(media_type=mediatype) + self.final_filename)
+                    logger.debug(f"...{_target}")
+                except KeyError:
+                    logger.debug(f"{mediatype}_dir not found, attempting destination dir.")
+                    _target = escape_specials(self.settings['destination_dir'].format(media_type=mediatype) + self.final_filename)
+                    logger.debug(f"...{_target}")
+                # else:
+                #     try:
+                #         logger.debug(f"Attempting to set {mediatype}_dir")
+                #         _target = os.path.join(self.settings[f'{mediatype}_dir'].format(media_type=mediatype), self.final_filename)
+                #         logger.debug(f"...{_target}")
+                #     except KeyError:
+                #         logger.debug(f"{mediatype}_dir not found")
+                #         _target = os.path.join(self.settings['destination_dir'].format(media_type=mediatype), self.final_filename)
+                #         logger.debug(f"...{_target}")
+                logger.debug(f"Using {_target}")
+                breakpoint()
+                new_medObj = MediaObject(filepath, os.path.dirname(_target), _target, self.settings['smb_user'], self.settings['smb_pass'])
                 self.mediaobjs.append(new_medObj)
 
 

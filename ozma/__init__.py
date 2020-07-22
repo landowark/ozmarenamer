@@ -273,6 +273,9 @@ def main(*args):
                     conn = SMBConnection(config['smb_user'], config['smb_pass'], "client", "host", use_ntlm_v2=True)
                     try:
                         conn.connect(server_address)
+                        logger.debug("Creating directory.")
+                        conn.createDirectory(share, os.path.dirname(file_path))
+                        logger.debug("Writing file.")
                         with open(file.source_file, "rb") as f:
                             resp = conn.storeFile(share, file_path, f)
                     except Exception as e:

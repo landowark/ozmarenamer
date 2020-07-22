@@ -4,6 +4,7 @@ import os
 import json
 import logging
 from .custom_loggers import GroupWriteRotatingFileHandler
+from pathlib import Path
 
 logger = logging.getLogger("ozma.setup")
 
@@ -27,8 +28,13 @@ def get_cliarg():
     aParser = ArgumentParser()
     aParser.add_argument("filename", type=str, help="The file to be parsed.")
     aParser.add_argument("-v", "--verbose", help="Verbose mode on", action="store_true")
-    aParser.add_argument("-e", "--extras", help="Scrape movies for extras.", action="store_true")
+    aParser.add_argument("-c", "--config", type=str, help="Path to the config.ini file.", default="")
+    aParser.add_argument("-d", "--destination_dir", type=str, help="Destination path.")
+    aParser.add_argument("-m", "--move", help="Move file instead of copy.", default=False)
     args = aParser.parse_args().__dict__
+    if args['destination_dir'] == None:
+        logger.debug("No destination directory given, deleting entry.")
+        del args['destination_dir']
     logger.debug("Arguments given: {}".format(args))
     if args['verbose']:
         handler = [item for item in logger.parent.handlers if item.name == "Stream"][0]
@@ -41,9 +47,20 @@ def get_filepath():
     return cli_args['filename']
 
 
-def get_config():
+def get_config(settings_path=""):
     cParser = ConfigParser(interpolation=ExtendedInterpolation())
-    settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'settings.ini')
+    # if user hasn't defined config path in cli args
+    if settings_path == "":
+        # Check user .config/ozma directory
+        if os.path.exists(os.path.join(os.path.expanduser("~/.config/ozma"), "config.ini")):
+            settings_path = os.path.join(os.path.expanduser("~/.config/ozma"), "config.ini")
+        # Check user .ozma directory
+        elif os.path.exists(os.path.join(os.path.expanduser("~/.ozma"), "config.ini")):
+            settings_path = os.path.join(os.path.expanduser("~/.ozma"), "config.ini")
+        # finally look in the local config
+        else:
+            settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'config.ini')
+    logger.debug(f"Using {settings_path} for config file.")
     cParser.read(settings_path)
     return {s:dict(cParser.items(s)) for s in cParser.sections()}['settings']
 

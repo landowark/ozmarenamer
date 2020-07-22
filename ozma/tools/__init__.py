@@ -24,8 +24,10 @@ def remove_extension(filepath):
 def get_episode_date(filename):
     season = re.compile(r'((19\d{2}|20\d{2})\s(0|1)?\d\s[0,1,2,3]?\d)')
     try:
+        # check if season is a tuple, if yes get first entry
         if isinstance(re.findall(season, filename)[0], tuple):
             return re.findall(season, filename)[0][0]
+        # if not return whole thing.
         else:
             return re.findall(season, filename)[0]
     except:
@@ -39,29 +41,29 @@ def get_parsible_file_name(filepath):
     # non-greedy regex to remove things in square brackets
     filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
     for word in strip_list:
+        # regex to remove anything in strip list
         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
         filename = re.sub(regex, "", filename)
-    # print("Post strip list: {}".format(filename))
+    # Seperate method to get season with regex
     season = get_season(filename)
+    # Seperate method to get season with regex
     episode = get_episode(filename)
     logger.debug(f"Season: {season}, Episode: {episode}")
     if season and episode:
+        # set string containing season/episode with S00E00 format
         seasep = season + episode
         logger.debug(f"Seasep = {seasep}")
         filename = filename.split(seasep)[0].strip()
+    # if main method of determining Season/episode didn't work, try dxdd method
     if not season and not episode:
         logger.debug("No season or episode found. Attempting dxdd method.")
-        # print("No season or episode found. Attempting dxdd method.")
         season, episode = get_season_episode_dxdd(filename)
         if season and episode:
             seasep = f"{season}x{episode}"
             filename = filename.split(seasep)[0].strip()
-        # filename = filename.replace("{}x{}".format(season, episode), "")
-        # filename = filename.replace("{}x{}".format(season, episode), "")
-    # print("Post dxdd method: {}".format(filename))
+    # if dxdd method didn't work, try with date.
     if not season and not episode:
         logger.debug("No season or episode found. Attempting date method.")
-        # print("No season or episode found. Attempting date method.")
         season = get_episode_date(filename)
         episode = None
         if season:
@@ -70,7 +72,6 @@ def get_parsible_file_name(filepath):
                 season = datetime.strptime(season, "%Y %m %d").date()
             except TypeError:
                 logger.debug("No season found.")
-    # print("Post date method: {}".format(filename))
     if season:
         try:
             filename = filename.replace(season.upper(), "")
@@ -85,27 +86,26 @@ def get_parsible_file_name(filepath):
             season = season
         except AttributeError:
             season = season
-    # print("Post season: {}".format(filename))
     if episode:
         filename = filename.replace(episode.upper(), "")
         filename = filename.replace(episode.lower(), "")
         episode = int(episode.strip("E"))
-    # print("Post episode: {}".format(filename))
+    # Check for a disc number for whatever reason.
     disc = get_disc(filename)
     if disc:
         filename = filename.replace(disc, "")
         disc = int(disc.strip("D"))
-    # print("Post disc: {}".format(filename))
+    # Check for a year, should be run after the episode year check.
     year = check_for_year(filename)
     if year:
         filename = filename.replace(year, "")
-    # print("Post year: {}".format(filename))
+    # Use word ninja to split apart words that maybe joined due to whitespace errors
     filename = " ".join(wn.split(filename)).title()
-    if year: filename = "{filename} ({year})".format(filename=filename, year=year)
+    if year: filename = f"{filename} ({year})"
     if filename.lower() in rejected_filenames:
-        logger.warning("Found a rejected filename: {}. Disregarding.".format(filename))
+        logger.warning(f"Found a rejected filename: {filename}. Disregarding.")
         filename = None
-    logger.debug("Using filename={}, season={}, episode={}, disc={}".format(filename, str(season), str(episode), str(disc)))
+    logger.debug(f"Using filename={filename}, season={season}, episode={episode}, disc={disc}")
     return filename, season, episode, disc
 
 

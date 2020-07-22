@@ -1,7 +1,12 @@
 <h1>Ozma File Renamer</h1>
 
 <h2>Settings File</h2>
-The settings file should be placed in the root directory (ie ozma_renamer) and should look like this:
+Ozma will look for a file called "config.ini" in three places, taking the first one it finds:
+1. The user's .config/ozma directory (/home/<user>/.config/ozma)
+2. The user's .ozma directory (/home/<user>/.ozma)
+3. The root directory of the ozma install directory.
+
+The config.ini file should look like this:
 
 ```ini
 [settings]

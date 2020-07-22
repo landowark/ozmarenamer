@@ -269,7 +269,8 @@ def main(*args):
                     path_list = file.destination_file.split("/")
                     server_address = path_list[2]
                     share = path_list[3]
-                    file_path = "/" + "/".join(path_list[4:])
+                    file_path = "/".join(path_list[4:])
+                    logger.debug(f"File path {file_path}")
                     conn = SMBConnection(config['smb_user'], config['smb_pass'], "client", "host", use_ntlm_v2=True)
                     try:
                         conn.connect(server_address)

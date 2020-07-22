@@ -16,6 +16,8 @@ from ssl import SSLCertVerificationError
 from .tools import tv_wikipedia, get_extension, get_media_type, get_parsible_file_name, \
     move_article_to_end, escape_specials, extract_files_if_folder, check_for_year
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
+from smb.SMBConnection import SMBConnection
+
 
 logger = setup_logger()
 
@@ -73,10 +75,6 @@ class MediaManager():
                 func = FUNCTION_MAP[mediatype]
                 func()
                 self.final_filename = self.final_filename.replace(":", " -").replace('"', '')
-                # rsync_mkdirs = escape_specials(os.path.join(self.settings['make_dir_schema'].format(media_type=mediatype),
-                #                                  os.path.split(self.final_filename)[0]))
-                # if self.settings['destination_dir'][:3] == "smb":
-                #     logger.debug(f"smb seen in {self.settings['destination_dir']}. Using smb.")
                 try:
                     logger.debug(f"Attempting to set {mediatype}_dir")
                     _target = escape_specials(self.settings[f'{mediatype}_dir'].format(media_type=mediatype) + self.final_filename)
@@ -95,7 +93,6 @@ class MediaManager():
                 #         _target = os.path.join(self.settings['destination_dir'].format(media_type=mediatype), self.final_filename)
                 #         logger.debug(f"...{_target}")
                 logger.debug(f"Using {_target}")
-                breakpoint()
                 new_medObj = MediaObject(filepath, os.path.dirname(_target), _target, self.settings['smb_user'], self.settings['smb_pass'])
                 self.mediaobjs.append(new_medObj)
 
@@ -127,16 +124,16 @@ class MediaManager():
         else:
             ai = IMDb()
         series = self.parse_series_name(self.filename, ai)
-        try:
-            # make sure dir created by pytvdbapi is useable by all in group
-            logger.debug('Making sure dir created by pytvdbapi is useable by all in group')
-            return_code = change_permission('/tmp/pytvdbapi')
-            if return_code == 0:
-                logger.debug("chmod successful.")
-            else:
-                logger.error("Problem with chmod")
-        except PermissionError as e:
-            logger.error(f"Permission error for {e.filename}")
+        # try:
+        #     # make sure dir created by pytvdbapi is useable by all in group
+        #     logger.debug('Making sure dir created by pytvdbapi is useable by all in group')
+        #     return_code = change_permission('/tmp/pytvdbapi')
+        #     if return_code == 0:
+        #         logger.debug("chmod successful.")
+        #     else:
+        #         logger.error("Problem with chmod")
+        # except PermissionError as e:
+        #     logger.error(f"Permission error for {e.filename}")
         if isinstance(series, api.Show):
             logger.debug("Using TVDb for series name.")
             series_name = move_article_to_end(series.SeriesName)
@@ -261,20 +258,28 @@ def main(*args):
     logger.debug(f"Running main with parameters: {config}")
     mParser = MediaManager(filepath, config=config)
     mParser.parse_file(mParser.filepath)
+
     rsync_trigger = False
     for file in mParser.mediaobjs:
         if os.path.isfile(file.source_file):
             logger.debug(f"Moving {file.source_file} to {file.destination_file}.")
-            if "@" in file.destination_file:
-                logger.debug(f"There is an @ in {file.destination_file}, using rsync.")
-                returncode = run_rsync(file)
-                if returncode == 0:
-                    logger.debug("rsync successful.")
-                    rsync_trigger = True
-                elif returncode == 1:
-                    logger.debug("No sync on testing platform.")
+            if file.destination_file[:3] == "smb":
+                if os.uname().nodename != 'landons-laptop':
+                    logger.debug(f"There is an smb in {file.destination_file}, using smb.")
+                    path_list = file.destination_file.split("/")
+                    server_address = path_list[2]
+                    share = path_list[3]
+                    file_path = "/".join(path_list[4:])
+                    conn = SMBConnection(config['smb_user'], config['smb_pass'], "client", "host", use_ntlm_v2=True)
+                    try:
+                        conn.connect(server_address)
+                        with open(file.source_file, "rb") as f:
+                            resp = conn.storeFile(share, file_path, f)
+                    except Exception as e:
+                        logger.error(f"SMB protocol failed: {e}")
+                    logger.debug(f"SMB protocol returned {resp}")
                 else:
-                    logger.error("Problem with rsync.")
+                    logger.warning("No moving on test platform.")
             else:
                 if os.uname().nodename != 'landons-laptop':
                     if config['move']:
@@ -288,7 +293,7 @@ def main(*args):
                             os.makedirs(os.path.dirname(file.destination_file))
                         shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
                 else:
-                    logger.debug("No moving on test platform.")
+                    logger.warning("No moving on test platform.")
         else:
             logger.error(f"{mParser.filepath} is not a real file.")
     if rsync_trigger:
@@ -299,42 +304,11 @@ def main(*args):
         except Exception as e:
             logger.error(e)
 
-
-def run_rsync(file):
-    main_return = rsync_runner(file.source_file,
-                               file.destination_dir,
-                               file.destination_file,
-                               file.rsync_user,
-                               file.rsync_pass
-                               )
-    if main_return == 0 or main_return == 1:
-        logger.debug("Rsync ran successfully for main file.")
-    return main_return
-
-
-def rsync_runner(source_file:str, destination_dir:str, destination_file:str, rsync_user:str, rsync_pass:str) -> int:
-    if os.uname().nodename != 'landons-laptop':
-        os.chdir(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        process = Popen([
-            'linux_scripts/rsync.sh',
-            source_file,
-            destination_dir,
-            destination_file,
-            rsync_user,
-            rsync_pass
-        ], stdout=PIPE, stderr=STDOUT)
-        logger.debug(process.stdout.read())
-        if process.stderr != None:
-            logger.error(process.stderr)
-        process.communicate()
-        return process.returncode
-    else:
-        return 1
-
-def change_permission(directory):
-    process = Popen(['chmod', "-R", "770", directory], stdout=PIPE, stderr=STDOUT)
-    if process.stderr != None:
-        msg = process.stderr
-        logger.error("Problem in change_permission def: {}".format(msg))
-    process.communicate()
-    return process.returncode
+#
+# def change_permission(directory):
+#     process = Popen(['chmod', "-R", "770", directory], stdout=PIPE, stderr=STDOUT)
+#     if process.stderr != None:
+#         msg = process.stderr
+#         logger.error("Problem in change_permission def: {}".format(msg))
+#     process.communicate()
+#     return process.returncode

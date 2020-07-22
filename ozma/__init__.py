@@ -182,6 +182,7 @@ class MediaManager():
         else:
             logger.debug("Using Wikipedia for episode name.")
             episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace('"', '')
+        episode_name = episode_name.replace("'", "")
         logger.debug("Found episode {}".format(episode_name))
         self.final_filename = self.settings['tv_schema'].format(
             series_name=series_name,

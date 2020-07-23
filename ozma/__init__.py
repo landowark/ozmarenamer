@@ -17,6 +17,7 @@ from .tools import tv_wikipedia, get_extension, get_media_type, get_parsible_fil
     move_article_to_end, escape_specials, extract_files_if_folder, check_for_year
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 from smb.SMBConnection import SMBConnection
+from smb.smb_structs import OperationFailure
 
 
 logger = setup_logger()
@@ -258,31 +259,39 @@ def main(*args):
     logger.debug(f"Running main with parameters: {config}")
     mParser = MediaManager(filepath, config=config)
     mParser.parse_file(mParser.filepath)
-
-    rsync_trigger = False
+    move_trigger = False
     for file in mParser.mediaobjs:
         if os.path.isfile(file.source_file):
             logger.debug(f"Moving {file.source_file} to {file.destination_file}.")
             if file.destination_file[:3] == "smb":
                 if os.uname().nodename != 'landons-laptop':
                     logger.debug(f"There is an smb in {file.destination_file}, using smb.")
-                    path_list = file.destination_file.split("/")
+                    path_list = file.destination_file.replace("\\", "").split("/")
                     server_address = path_list[2]
                     share = path_list[3]
+                    folders = path_list[4:-1]
                     file_path = "/".join(path_list[4:])
                     logger.debug(f"File path {file_path}")
                     conn = SMBConnection(config['smb_user'], config['smb_pass'], "client", "host", use_ntlm_v2=True)
                     try:
                         conn.connect(server_address)
-                        # logger.debug("Creating directory.")
-                        # conn.createDirectory(share, os.path.dirname(file_path))
-                        logger.debug(conn.listPath(share, os.path.dirname(file_path)))
-                        logger.debug("Writing file.")
-                        with open(file.source_file, "rb") as f:
-                            resp = conn.storeFile(share, file_path, f)
                     except Exception as e:
-                        logger.error(f"SMB protocol failed: {e}")
-                    logger.debug(f"SMB protocol returned {resp}")
+                        logger.error(f"SMB connection failed: {e}")
+                    fullpath = ""
+                    for folder in folders:
+                        fullpath += f"/{folder}"
+                        try:
+                            conn.listPath(share, fullpath)
+                        except OperationFailure:
+                            conn.createDirectory(share, fullpath)
+                    logger.debug("Writing file.")
+                    with open(file.source_file, "rb") as f:
+                        try:
+                            resp = conn.storeFile(share, file_path, f)
+                            logger.debug(f"SMB protocol returned {resp}")
+                            move_trigger = True
+                        except Exception as e:
+                            logger.error(f"Problem with writing file on smb: {e}")
                 else:
                     logger.warning("No moving on test platform.")
             else:
@@ -292,16 +301,18 @@ def main(*args):
                         if not os.path.exists(os.path.dirname(file.destination_file)):
                             os.makedirs(os.path.dirname(file.destination_file))
                         shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
+                        move_trigger = True
                     else:
                         logger.debug("Commencing copy.")
                         if not os.path.exists(os.path.dirname(file.destination_file)):
                             os.makedirs(os.path.dirname(file.destination_file))
                         shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
+                        move_trigger = True
                 else:
                     logger.warning("No moving on test platform.")
         else:
             logger.error(f"{mParser.filepath} is not a real file.")
-    if rsync_trigger:
+    if move_trigger and "plex_url" in config.keys():
         try:
             logger.debug("Updating Plex library.")
             plex = PlexServer(mParser.settings['plex_url'], mParser.settings['plex_token'])

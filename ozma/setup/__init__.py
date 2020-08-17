@@ -1,3 +1,4 @@
+import sys
 from argparse import ArgumentParser
 from configparser import ConfigParser, ExtendedInterpolation
 import os
@@ -60,6 +61,14 @@ def get_config(settings_path=""):
         # finally look in the local config
         else:
             settings_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'config.ini')
+    else:
+        if os.path.isdir(settings_path):
+            settings_path = os.path.join(settings_path, "config.ini")
+        elif os.path.isfile(settings_path):
+            settings_path = settings_path
+        else:
+            logger.error("No config.ini file found. Exiting program.")
+            sys.exit()
     logger.debug(f"Using {settings_path} for config file.")
     cParser.read(settings_path)
     return {s:dict(cParser.items(s)) for s in cParser.sections()}['settings']

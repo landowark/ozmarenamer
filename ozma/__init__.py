@@ -1,5 +1,4 @@
 import shutil
-from subprocess import Popen, PIPE, STDOUT
 import sys
 from pytvdbapi.error import TVDBIndexError, ConnectionError, BadData
 import os
@@ -84,15 +83,6 @@ class MediaManager():
                     logger.debug(f"{mediatype}_dir not found, attempting destination dir.")
                     _target = escape_specials(self.settings['destination_dir'].format(media_type=mediatype) + self.final_filename)
                     logger.debug(f"...{_target}")
-                # else:
-                #     try:
-                #         logger.debug(f"Attempting to set {mediatype}_dir")
-                #         _target = os.path.join(self.settings[f'{mediatype}_dir'].format(media_type=mediatype), self.final_filename)
-                #         logger.debug(f"...{_target}")
-                #     except KeyError:
-                #         logger.debug(f"{mediatype}_dir not found")
-                #         _target = os.path.join(self.settings['destination_dir'].format(media_type=mediatype), self.final_filename)
-                #         logger.debug(f"...{_target}")
                 logger.debug(f"Using {_target}")
                 new_medObj = MediaObject(filepath, os.path.dirname(_target), _target, self.settings['smb_user'], self.settings['smb_pass'])
                 self.mediaobjs.append(new_medObj)
@@ -125,16 +115,6 @@ class MediaManager():
         else:
             ai = IMDb()
         series = self.parse_series_name(self.filename, ai)
-        # try:
-        #     # make sure dir created by pytvdbapi is useable by all in group
-        #     logger.debug('Making sure dir created by pytvdbapi is useable by all in group')
-        #     return_code = change_permission('/tmp/pytvdbapi')
-        #     if return_code == 0:
-        #         logger.debug("chmod successful.")
-        #     else:
-        #         logger.error("Problem with chmod")
-        # except PermissionError as e:
-        #     logger.error(f"Permission error for {e.filename}")
         if isinstance(series, api.Show):
             logger.debug("Using TVDb for series name.")
             series_name = move_article_to_end(series.SeriesName)
@@ -259,13 +239,17 @@ def main(*args):
     logger.debug(f"Running main with parameters: {config}")
     mParser = MediaManager(filepath, config=config)
     mParser.parse_file(mParser.filepath)
+    # A trigger to keep track of if the move was successful.
     move_trigger = False
     for file in mParser.mediaobjs:
+        # Make sure the source file is actually there.
         if os.path.isfile(file.source_file):
             logger.debug(f"Moving {file.source_file} to {file.destination_file}.")
+            # Check for smb file destination
             if file.destination_file[:3] == "smb":
                 if os.uname().nodename != 'landons-laptop':
                     logger.debug(f"There is an smb in {file.destination_file}, using smb.")
+                    # apparently pysmb doesn't like backslashes.
                     path_list = file.destination_file.replace("\\", "").split("/")
                     server_address = path_list[2]
                     share = path_list[3]
@@ -280,11 +264,13 @@ def main(*args):
                     fullpath = ""
                     for folder in folders:
                         fullpath += f"/{folder}"
+                        # Check if directory exists, if not, make it.
                         try:
                             conn.listPath(share, fullpath)
                         except OperationFailure:
                             conn.createDirectory(share, fullpath)
                     logger.debug("Writing file.")
+                    # Write the file.
                     with open(file.source_file, "rb") as f:
                         try:
                             resp = conn.storeFile(share, file_path, f)
@@ -312,6 +298,7 @@ def main(*args):
                     logger.warning("No moving on test platform.")
         else:
             logger.error(f"{mParser.filepath} is not a real file.")
+    # if the move is successful and there's plex in the config, update the library.
     if move_trigger and "plex_url" in config.keys():
         try:
             logger.debug("Updating Plex library.")
@@ -319,12 +306,3 @@ def main(*args):
             plex.library.update()
         except Exception as e:
             logger.error(e)
-
-#
-# def change_permission(directory):
-#     process = Popen(['chmod', "-R", "770", directory], stdout=PIPE, stderr=STDOUT)
-#     if process.stderr != None:
-#         msg = process.stderr
-#         logger.error("Problem in change_permission def: {}".format(msg))
-#     process.communicate()
-#     return process.returncode

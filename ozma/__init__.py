@@ -73,8 +73,10 @@ class MediaManager():
                         mediatype = 'movies'
                 logger.debug(f"Setting media type as {mediatype}.")
                 func = FUNCTION_MAP[mediatype]
+                logger.debug(f"Selected {func} as search function.")
                 func()
                 self.final_filename = self.final_filename.replace(":", " -").replace('"', '')
+                logger.debug(f"Using {self.final_filename} as final file name.")
                 try:
                     logger.debug(f"Attempting to set {mediatype}_dir")
                     _target = escape_specials(self.settings[f'{mediatype}_dir'].format(media_type=mediatype) + self.final_filename)

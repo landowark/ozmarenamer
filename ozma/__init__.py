@@ -117,6 +117,7 @@ class MediaManager():
         else:
             ai = IMDb()
         series = self.parse_series_name(self.filename, ai)
+        logger.debug(f"Got {series} as series.")
         if isinstance(series, api.Show):
             logger.debug("Using TVDb for series name.")
             series_name = move_article_to_end(series.SeriesName)
@@ -198,6 +199,8 @@ class MediaManager():
         elif isinstance(ai, IMDb):
             # Todo flesh this out more.
             series_name = ai.search_movie(self.filename)[0]
+        else:
+            logger.error("Yeah, so for some reason couldn't get a series name.")
         return series_name
 
     def search_movie(self):

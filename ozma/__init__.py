@@ -200,7 +200,10 @@ class MediaManager():
             # Todo flesh this out more.
             series_name = ai.search_movie(self.filename)[0]
         else:
-            logger.error(f"Yeah, so for some reason couldn't get a series name. {type(ai).__name__}")
+            try:
+                logger.error(f"Yeah, so for some reason couldn't get a series name. {type(ai).__name__}")
+            except:
+                logger.error(f"It doesn't look like ai object exists.")
         return series_name
 
     def search_movie(self):

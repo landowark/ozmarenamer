@@ -97,6 +97,7 @@ class MediaManager():
 
     def search_tv(self):
         # TODO make use IMDB if tvdb fails.
+        logger.debug("Hello from search_tv.")
         try:
             tvdb_apikey = self.settings['thetvdbkey']
         except KeyError:
@@ -173,6 +174,7 @@ class MediaManager():
         )
         logger.debug(f"Using {self.final_filename} as final file name.")
 
+
     def parse_series_name(self, series_name, ai):
         if isinstance(ai, api.TVDB):
             try:
@@ -203,10 +205,11 @@ class MediaManager():
             try:
                 logger.error(f"Yeah, so for some reason couldn't get a series name. {type(ai).__name__}")
             except:
-                logger.error(f"It doesn't look like ai object exists.")
+                logger.error("It doesn't look like ai object exists.")
         return series_name
 
     def search_movie(self):
+        logger.debug("Hello from search_movie.")
         ai = IMDb()
         split = False
         try:

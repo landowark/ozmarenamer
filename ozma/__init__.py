@@ -106,13 +106,7 @@ class MediaManager():
         if tvdb_apikey != "":
             try:
                 ai = api.TVDB(tvdb_apikey)
-            except ConnectionError:
-                series = ""
-                logger.error("TVDB did not connect.")
-            except TimeoutError:
-                series = ""
-                logger.error("TVDB did not connect.")
-            except SSLCertVerificationError:
+            except (ConnectionError, TimeoutError, SSLCertVerificationError):
                 series = ""
                 logger.error("TVDB did not connect.")
         else:
@@ -141,19 +135,7 @@ class MediaManager():
             logger.debug("Using TVDb for episode name.")
             try:
                 episode_name = series[self.season][self.episode].EpisodeName
-            except KeyError as e:
-                logger.error(f"Problem using TVDB for episode name: {e}")
-                episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace(
-                    '"', '')
-            except ConnectionError as e:
-                logger.error(f"Connection error to tvdb: {e}")
-                episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace(
-                    '"', '')
-            except TVDBIndexError as e:
-                logger.error(f"Couldn't find episode: {e}")
-                episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace(
-                    '"', '')
-            except TimeoutError as e:
+            except (ConnectionError, TVDBIndexError, TimeoutError, KeyError) as e:
                 logger.error(f"Connection error to tvdb: {e}")
                 episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace(
                     '"', '')
@@ -190,12 +172,8 @@ class MediaManager():
                     series_name = difflib.get_close_matches(self.filename, get_all_series_names(self.settings['plex_url'], self.settings['plex_token']), 1)[0]
                     logger.debug(f"Series returned from plex: {series_name}")
                     self.parse_series_name(series_name, ai)
-            except TVDBIndexError:
-                logger.error("Looks like no result was found")
-                logger.debug("Falling back to IMDB")
-                series_name = self.parse_series_name(self.filename, IMDb())
-            except UnboundLocalError:
-                logger.error("Looks like TVDB was not found.")
+            except (TVDBIndexError, UnboundLocalError) as e:
+                logger.error(f"Looks like no result was found: {e}")
                 logger.debug("Falling back to IMDB")
                 series_name = self.parse_series_name(self.filename, IMDb())
         elif isinstance(ai, IMDb):

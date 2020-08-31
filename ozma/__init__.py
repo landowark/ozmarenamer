@@ -99,6 +99,7 @@ class MediaManager():
         # TODO make use IMDB if tvdb fails.
         logger.debug("Hello from search_tv.")
         try:
+            logger.debug("Getting tvdbkey.")
             tvdb_apikey = self.settings['thetvdbkey']
         except KeyError:
             logger.debug("No tvdb api key found, falling back to IMDb")
@@ -110,6 +111,7 @@ class MediaManager():
                 series = ""
                 logger.error("TVDB did not connect.")
         else:
+            logger.debug("tvdbkey was empty, using IMDb.")
             ai = IMDb()
         series = self.parse_series_name(self.filename, ai)
         logger.debug(f"Got {series} as series.")

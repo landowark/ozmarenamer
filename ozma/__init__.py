@@ -282,6 +282,7 @@ def main(*args):
                         if not os.path.exists(os.path.dirname(file.destination_file)):
                             os.makedirs(os.path.dirname(file.destination_file))
                         if config['use_ffmpeg']:
+                            logger.debug("Using ffmpeg.")
                             child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
                                                      stdout=subprocess.PIPE)
                             streamdata = child.communicate()[0]
@@ -298,6 +299,7 @@ def main(*args):
                         if not os.path.exists(os.path.dirname(file.destination_file)):
                             os.makedirs(os.path.dirname(file.destination_file))
                         if config['use_ffmpeg']:
+                            logger.debug("Using ffmpeg.")
                             child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
                                                      stdout=subprocess.PIPE)
                             streamdata = child.communicate()[0]

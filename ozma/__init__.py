@@ -298,8 +298,8 @@ def main(*args):
                             move_trigger = True
                     else:
                         logger.debug("Commencing copy.")
-                        if not os.path.exists(os.path.dirname(file.destination_file)):
-                            os.makedirs(os.path.dirname(file.destination_file))
+                        if not os.path.exists(os.path.dirname(Path(file.destination_file))):
+                            os.makedirs(os.path.dirname(Path(file.destination_file)))
                         if config['use_ffmpeg']:
                             logger.debug("Using ffmpeg.")
                             child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),

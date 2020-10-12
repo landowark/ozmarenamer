@@ -279,40 +279,41 @@ def main(*args):
                     logger.warning("No moving on test platform.")
             else:
                 if os.uname().nodename != 'landons-laptop':
-                    if config['move']:
-                        logger.debug("Commencing move.")
-                        if not os.path.exists(os.path.dirname(file.destination_file)):
-                            os.makedirs(os.path.dirname(file.destination_file.replace("\\\\", "\\")))
-                        if config['use_ffmpeg']:
-                            logger.debug("Using ffmpeg.")
-                            child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
-                                                     stdout=subprocess.PIPE)
-                            streamdata = child.communicate()[0]
-                            rc = child.returncode
-                            if rc == 0:
-                                move_trigger = True
-                            else:
-                                logger.error("There was a problem with FFMPEG.")
-                        else:
-                            shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
+                    # if config['move']:
+                    #     logger.debug("Commencing move.")
+                    #     if not os.path.exists(os.path.dirname(file.destination_file)):
+                    #         os.makedirs(os.path.dirname(file.destination_file))
+                    #     if config['use_ffmpeg']:
+                    #         logger.debug("Using ffmpeg.")
+                    #         child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
+                    #                                  stdout=subprocess.PIPE)
+                    #         streamdata = child.communicate()[0]
+                    #         rc = child.returncode
+                    #         if rc == 0:
+                    #             move_trigger = True
+                    #         else:
+                    #             logger.error("There was a problem with FFMPEG.")
+                    #     else:
+                    #         shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
+                    #         move_trigger = True
+                    # else:
+                    logger.debug("Commencing copy.")
+                    if not os.path.exists(os.path.dirname(file.destination_file)):
+                        logger.debug(f"Making directory {file.destination_file}")
+                        os.makedirs(os.path.dirname(file.destination_file))
+                    if config['use_ffmpeg']:
+                        logger.debug("Using ffmpeg.")
+                        child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
+                                                 stdout=subprocess.PIPE)
+                        streamdata = child.communicate()[0]
+                        rc = child.returncode
+                        if rc == 0:
                             move_trigger = True
+                        else:
+                            logger.error("There was a problem with FFMPEG.")
                     else:
-                        logger.debug("Commencing copy.")
-                        if not os.path.exists(os.path.dirname(file.destination_file)):
-                            os.makedirs(os.path.dirname(file.destination_file.replace("\\\\", "\\")))
-                        if config['use_ffmpeg']:
-                            logger.debug("Using ffmpeg.")
-                            child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
-                                                     stdout=subprocess.PIPE)
-                            streamdata = child.communicate()[0]
-                            rc = child.returncode
-                            if rc == 0:
-                                move_trigger = True
-                            else:
-                                logger.error("There was a problem with FFMPEG.")
-                        else:
-                            shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
-                            move_trigger = True
+                        shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
+                        move_trigger = True
                 else:
                     logger.warning("No moving on test platform.")
         else:

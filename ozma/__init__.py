@@ -299,7 +299,7 @@ def main(*args):
                     # else:
                     logger.debug("Commencing copy.")
                     if not os.path.exists(os.path.dirname(file.destination_file)):
-                        logger.debug(f"Making directory {file.destination_file}")
+                        logger.debug(f"Making directory {os.path.dirname(file.destination_file)}")
                         os.makedirs(os.path.dirname(file.destination_file))
                     if config['use_ffmpeg']:
                         logger.debug("Using ffmpeg.")

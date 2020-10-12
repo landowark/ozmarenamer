@@ -225,7 +225,8 @@ class MediaManager():
 
 
 def construct_ffmpeg_copy(source_file:str, destination_file:str) -> list:
-    return ["ffmpeg", "-i", source_file, "-c", "copy", "-map_metadata", "-1", destination_file]
+    logger.debug(f"Making ffmpeg paths with {source_file} and {destination_file}")
+    return ["ffmpeg", "-i", Path(source_file), "-c", "copy", "-map_metadata", "-1", Path(destination_file)]
 
 def main(*args):
     config = dict(**get_config(args[0]['config']))
@@ -284,7 +285,7 @@ def main(*args):
                             os.makedirs(os.path.dirname(file.destination_file))
                         if config['use_ffmpeg']:
                             logger.debug("Using ffmpeg.")
-                            child = subprocess.Popen(construct_ffmpeg_copy(Path(file.source_file), Path(file.destination_file)),
+                            child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
                                                      stdout=subprocess.PIPE)
                             streamdata = child.communicate()[0]
                             rc = child.returncode
@@ -301,7 +302,7 @@ def main(*args):
                             os.makedirs(os.path.dirname(file.destination_file))
                         if config['use_ffmpeg']:
                             logger.debug("Using ffmpeg.")
-                            child = subprocess.Popen(construct_ffmpeg_copy(Path(file.source_file), Path(file.destination_file)),
+                            child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
                                                      stdout=subprocess.PIPE)
                             streamdata = child.communicate()[0]
                             rc = child.returncode

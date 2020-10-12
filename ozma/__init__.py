@@ -226,7 +226,7 @@ class MediaManager():
 
 def construct_ffmpeg_copy(source_file:str, destination_file:str) -> list:
     logger.debug(f"Making ffmpeg paths with {source_file} and {destination_file}")
-    return ["ffmpeg", "-i", source_file, "-c", "copy", "-map_metadata", "-1", destination_file]
+    return ["ffmpeg", "-i", source_file, "-c", "copy", "-map_metadata", "-1", destination_file.replace("\\", "")]
 
 def main(*args):
     config = dict(**get_config(args[0]['config']))

@@ -1,4 +1,5 @@
 import shutil
+import subprocess
 import sys
 from pytvdbapi.error import TVDBIndexError, ConnectionError, BadData
 import os
@@ -222,6 +223,9 @@ class MediaManager():
         sys.exit("No functionality.")
 
 
+def construct_ffmpeg_copy(source_file:str, destination_file:str) -> list:
+    return ["ffmpeg", "-i", source_file, "-c", "copy", "-map_metadata", "-1", destination_file]
+
 def main(*args):
     config = dict(**get_config(args[0]['config']))
     # merge args into config, overwriting values in config.
@@ -277,14 +281,34 @@ def main(*args):
                         logger.debug("Commencing move.")
                         if not os.path.exists(os.path.dirname(file.destination_file)):
                             os.makedirs(os.path.dirname(file.destination_file))
-                        shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
-                        move_trigger = True
+                        if config['use_ffmpeg']:
+                            child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
+                                                     stdout=subprocess.PIPE)
+                            streamdata = child.communicate()[0]
+                            rc = child.returncode
+                            if rc == 0:
+                                move_trigger = True
+                            else:
+                                logger.error("There was a problem with FFMPEG.")
+                        else:
+                            shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
+                            move_trigger = True
                     else:
                         logger.debug("Commencing copy.")
                         if not os.path.exists(os.path.dirname(file.destination_file)):
                             os.makedirs(os.path.dirname(file.destination_file))
-                        shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
-                        move_trigger = True
+                        if config['use_ffmpeg']:
+                            child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
+                                                     stdout=subprocess.PIPE)
+                            streamdata = child.communicate()[0]
+                            rc = child.returncode
+                            if rc == 0:
+                                move_trigger = True
+                            else:
+                                logger.error("There was a problem with FFMPEG.")
+                        else:
+                            shutil.copy2(src=file.source_file, dst=file.destination_file, follow_symlinks=True)
+                            move_trigger = True
                 else:
                     logger.warning("No moving on test platform.")
         else:

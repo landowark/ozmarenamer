@@ -18,6 +18,7 @@ from .tools import tv_wikipedia, get_extension, get_media_type, get_parsible_fil
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 from smb.SMBConnection import SMBConnection
 from smb.smb_structs import OperationFailure
+from pathlib import Path
 
 
 logger = setup_logger()
@@ -283,7 +284,7 @@ def main(*args):
                             os.makedirs(os.path.dirname(file.destination_file))
                         if config['use_ffmpeg']:
                             logger.debug("Using ffmpeg.")
-                            child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
+                            child = subprocess.Popen(construct_ffmpeg_copy(Path(file.source_file), Path(file.destination_file)),
                                                      stdout=subprocess.PIPE)
                             streamdata = child.communicate()[0]
                             rc = child.returncode
@@ -300,7 +301,7 @@ def main(*args):
                             os.makedirs(os.path.dirname(file.destination_file))
                         if config['use_ffmpeg']:
                             logger.debug("Using ffmpeg.")
-                            child = subprocess.Popen(construct_ffmpeg_copy(file.source_file, file.destination_file),
+                            child = subprocess.Popen(construct_ffmpeg_copy(Path(file.source_file), Path(file.destination_file)),
                                                      stdout=subprocess.PIPE)
                             streamdata = child.communicate()[0]
                             rc = child.returncode

@@ -237,7 +237,7 @@ class MediaManager():
         album_name = album.get_name()
         logger.debug(f"We got {album_name} as album.")
         track_list = [track.get_name() for track in album.get_tracks()]
-        track_number = str([i for i, x in enumerate(track_list) if x == track_title][0])
+        track_number = str([i for i, x in enumerate(track_list) if x == track_title][0]).zfill(2)
         self.final_filename = self.settings['music_schema'].format(
             artist_name=artist_name,
             album_name=album_name,

@@ -1,6 +1,8 @@
 import shutil
 import subprocess
 import sys
+
+import pylast
 from pytvdbapi.error import TVDBIndexError, ConnectionError, BadData
 import os
 from .setup import get_config, get_filepath, get_media_types, setup_logger
@@ -13,8 +15,8 @@ import re
 import difflib
 from .tools.plex import get_all_series_names
 from ssl import SSLCertVerificationError
-from .tools import tv_wikipedia, get_extension, get_media_type, get_parsible_file_name, \
-    move_article_to_end, escape_specials, extract_files_if_folder, check_for_year
+from .tools import tv_wikipedia, get_extension, get_media_type, get_parsible_video_name, \
+    move_article_to_end, escape_specials, extract_files_if_folder, check_for_year, get_parsible_audio_name
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 from smb.SMBConnection import SMBConnection
 from smb.smb_structs import OperationFailure
@@ -49,7 +51,7 @@ class MediaManager():
         FUNCTION_MAP = {"book": self.search_book,
                         "tv": self.search_tv,
                         "movies": self.search_movie,
-                        "audio": self.search_audio}
+                        "music": self.search_music}
         logger.debug("Starting run on {}".format(filepath))
         # if the torrent is a folder recur for each file in folder of appropriate type.
         if os.path.isdir(filepath):
@@ -64,32 +66,35 @@ class MediaManager():
         else:
             self.extension = get_extension(filepath)
             mediatype = get_media_type(self.extension)
-            self.filename, self.season, self.episode, self.disc = get_parsible_file_name(filepath)
-            # Ensure that filename was not rejected.
-            if self.filename:
-                if mediatype == 'video':
-                    if self.season:
-                        # If we were able to find a season this is a tv show
-                        mediatype = 'tv'
-                    else:
-                        mediatype = 'movies'
-                logger.debug(f"Setting media type as {mediatype}.")
-                func = FUNCTION_MAP[mediatype]
-                logger.debug(f"Selected {func} as search function.")
-                func()
-                self.final_filename = self.final_filename.replace(":", " -").replace('"', '')
-                logger.debug(f"Using {self.final_filename} as final file name.")
-                try:
-                    logger.debug(f"Attempting to set {mediatype}_dir")
-                    _target = escape_specials(self.settings[f'{mediatype}_dir'].format(media_type=mediatype) + self.final_filename)
-                    logger.debug(f"...{_target}")
-                except KeyError:
-                    logger.debug(f"{mediatype}_dir not found, attempting destination dir.")
-                    _target = escape_specials(self.settings['destination_dir'].format(media_type=mediatype) + self.final_filename)
-                    logger.debug(f"...{_target}")
-                logger.debug(f"Using {_target}")
-                new_medObj = MediaObject(filepath, os.path.dirname(_target), _target, self.settings['smb_user'], self.settings['smb_pass'])
-                self.mediaobjs.append(new_medObj)
+
+            # todo Ensure that filename was not rejected.
+#            if self.filename:
+            if mediatype == 'video':
+                if self.season:
+                    # If we were able to find a season this is a tv show
+                    mediatype = 'tv'
+                else:
+                    mediatype = 'movies'
+                self.filename, self.season, self.episode, self.disc = get_parsible_video_name(filepath)
+            elif mediatype == "music":
+                self.filename, self.title, self.artist = get_parsible_audio_name(filepath)
+            logger.debug(f"Setting media type as {mediatype}.")
+            func = FUNCTION_MAP[mediatype]
+            logger.debug(f"Selected {func} as search function.")
+            func()
+            self.final_filename = self.final_filename.replace(":", " -").replace('"', '')
+            logger.debug(f"Using {self.final_filename} as final file name.")
+            try:
+                logger.debug(f"Attempting to set {mediatype}_dir")
+                _target = escape_specials(self.settings[f'{mediatype}_dir'].format(media_type=mediatype) + self.final_filename)
+                logger.debug(f"...{_target}")
+            except KeyError:
+                logger.debug(f"{mediatype}_dir not found, attempting destination dir.")
+                _target = escape_specials(self.settings['destination_dir'].format(media_type=mediatype) + self.final_filename)
+                logger.debug(f"...{_target}")
+            logger.debug(f"Using {_target}")
+            new_medObj = MediaObject(filepath, os.path.dirname(_target), _target, self.settings['smb_user'], self.settings['smb_pass'])
+            self.mediaobjs.append(new_medObj)
 
 
     def search_book(self):
@@ -219,9 +224,27 @@ class MediaManager():
         logger.debug(f"Using {self.final_filename} as final file name.")
 
 
-    def search_audio(self):
-        logger.warning("Audio functionality not yet implemented.")
-        sys.exit("No functionality.")
+    def search_music(self):
+        ai = pylast.LastFMNetwork(api_key=self.settings['lastfmkey'], api_secret=self.settings['lastfmsec'])
+        searched_artist = pylast.ArtistSearch(artist_name=self.artist, network=ai).get_next_page()[0]
+        track = pylast.TrackSearch(artist_name=searched_artist.get_name(), track_title=self.title, network=ai).get_next_page()[0]
+        track_title = track.get_name()
+        logger.debug(f"We got {track_title} as title.")
+        artist_name = move_article_to_end(track.get_artist().get_name())
+        logger.debug(f"We got {artist_name} as artist.")
+        album = track.get_album()
+        print(album)
+        album_name = album.get_name()
+        logger.debug(f"We got {album_name} as album.")
+        track_list = [track.get_name() for track in album.get_tracks()]
+        track_number = str([i for i, x in enumerate(track_list) if x == track_title][0])
+        self.final_filename = self.settings['music_schema'].format(
+            artist_name=artist_name,
+            album_name=album_name,
+            track_number=track_number,
+            track_title=track_title,
+            extension=self.extension
+        )
 
 
 def construct_ffmpeg_copy(source_file:str, destination_file:str) -> list:

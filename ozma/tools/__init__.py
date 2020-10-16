@@ -5,6 +5,7 @@ from ..setup import get_media_types, get_allowed_extensions
 import logging
 from datetime import datetime
 import shutil
+import unicodedata
 
 logger = logging.getLogger("ozma.tools")
 strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED", "DVDRip", "HC",
@@ -34,7 +35,7 @@ def get_episode_date(filename):
         return None
 
 
-def get_parsible_file_name(filepath):
+def get_parsible_video_name(filepath:str):
     # remove season number
     filename = remove_extension(split_file_name(filepath))
     filename = filename.replace(".", " ")
@@ -109,6 +110,20 @@ def get_parsible_file_name(filepath):
     return filename, season, episode, disc
 
 
+def get_parsible_audio_name(filepath:str):
+    # remove season number
+    filename = remove_extension(split_file_name(filepath))
+    filename = filename.replace(".", " ")
+    # non-greedy regex to remove things in square brackets
+    filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
+    for word in strip_list:
+        # regex to remove anything in strip list
+        regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
+        filename = re.sub(regex, "", filename)
+    title, artist = get_title_artist(filename)
+    return filename, title, artist
+
+
 def get_season(filename):
     season = re.compile(r's(?:eason)?\d{1,2}', re.IGNORECASE)
     try:
@@ -141,6 +156,14 @@ def get_disc(filename):
         return re.findall(disc, filename)[0].upper()
     except:
         return None
+
+
+def get_title_artist(filename:str):
+    # for music
+    title = filename.split("-")[1].strip()
+    artist = filename.split("-")[0].strip()
+    return title, artist
+
 
 def get_media_type(extenstion):
     types = get_media_types()
@@ -189,3 +212,7 @@ def escape_specials(input:str) -> str:
         input = input.replace(special, f"\\{special}")
     return input
 
+def remove_accents(input_str):
+    nfkd_form = unicodedata.normalize('NFKD', input_str)
+    only_ascii = nfkd_form.encode('ASCII', 'ignore')
+    return only_ascii.decode("utf-8")

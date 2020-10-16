@@ -20,8 +20,7 @@ from .tools import tv_wikipedia, get_extension, get_media_type, get_parsible_vid
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 from smb.SMBConnection import SMBConnection
 from smb.smb_structs import OperationFailure
-from pathlib import Path
-
+import mutagen
 
 logger = setup_logger()
 
@@ -48,6 +47,7 @@ class MediaManager():
         self.mediaobjs = []
 
     def parse_file(self, filepath:str):
+        self.filepath = filepath
         FUNCTION_MAP = {"book": self.search_book,
                         "tv": self.search_tv,
                         "movies": self.search_movie,
@@ -225,6 +225,7 @@ class MediaManager():
 
 
     def search_music(self):
+        mut_file = mutagen.File(self.filepath)
         ai = pylast.LastFMNetwork(api_key=self.settings['lastfmkey'], api_secret=self.settings['lastfmsec'])
         searched_artist = pylast.ArtistSearch(artist_name=self.artist, network=ai).get_next_page()[0]
         track = pylast.TrackSearch(artist_name=searched_artist.get_name(), track_title=self.title, network=ai).get_next_page()[0]
@@ -237,7 +238,15 @@ class MediaManager():
         album_name = album.get_name()
         logger.debug(f"We got {album_name} as album.")
         track_list = [track.get_name() for track in album.get_tracks()]
-        track_number = str([i for i, x in enumerate(track_list) if x == track_title][0]).zfill(2)
+        track_number = str([i for i, x in enumerate(track_list) if x == track_title][0]+1).zfill(2)
+        track_total = str(len(track_list))
+        logger.debug("Using mutagen to update metadata.")
+        mut_file['TRACKNUMBER'] = track_number
+        mut_file['TRACKTOTAL'] = track_total
+        mut_file['TITLE'] = track_title
+        mut_file['ALBUM'] = album_name
+        mut_file['ARTIST'] = artist_name
+        mut_file.save(self.filepath)
         self.final_filename = self.settings['music_schema'].format(
             artist_name=artist_name,
             album_name=album_name,

@@ -70,7 +70,8 @@ class MediaManager():
             # todo Ensure that filename was not rejected.
 #            if self.filename:
             if mediatype == 'video':
-                if self.season:
+                if hasattr(self, "season"):
+                # if self.season:
                     # If we were able to find a season this is a tv show
                     mediatype = 'tv'
                 else:

@@ -70,13 +70,13 @@ class MediaManager():
             # todo Ensure that filename was not rejected.
 #            if self.filename:
             if mediatype == 'video':
-                if hasattr(self, "season"):
-                # if self.season:
+                self.filename, self.season, self.episode, self.disc = get_parsible_video_name(filepath)
+                # if hasattr(self, "season"):
+                if self.season:
                     # If we were able to find a season this is a tv show
                     mediatype = 'tv'
                 else:
                     mediatype = 'movies'
-                self.filename, self.season, self.episode, self.disc = get_parsible_video_name(filepath)
             elif mediatype == "music":
                 self.filename, self.title, self.artist = get_parsible_audio_name(filepath)
             logger.debug(f"Setting media type as {mediatype}.")

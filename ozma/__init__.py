@@ -238,8 +238,11 @@ class MediaManager():
         print(album)
         album_name = album.get_name()
         logger.debug(f"We got {album_name} as album.")
-        track_list = [track.get_name() for track in album.get_tracks()]
-        track_number = str([i for i, x in enumerate(track_list) if x == track_title][0]+1).zfill(2)
+        track_list = [track.get_name().lower() for track in album.get_tracks()]
+        try:
+            track_number = str([i for i, x in enumerate(track_list) if x == track_title.lower()][0]+1).zfill(2)
+        except IndexError as e:
+            logger.error(f"Couldn't get track number of {track_title} in {track_list}")
         track_total = str(len(track_list))
         logger.debug("Using mutagen to update metadata.")
         mut_file['TRACKNUMBER'] = track_number

@@ -55,23 +55,19 @@ class MediaManager():
         logger.debug("Starting run on {}".format(filepath))
         # if the torrent is a folder recur for each file in folder of appropriate type.
         if os.path.isdir(filepath):
-            logger.debug("Filepath {} is a directory, extracting files.".format(filepath))
+            logger.debug(f"Filepath {filepath} is a directory, extracting files.")
             file_list = extract_files_if_folder(dir_path=filepath)
             if file_list != []:
                 logger.debug("Look out, it's recursion time!")
                 for file in file_list:
                     self.parse_file(filepath=file)
             else:
-                logger.error("There are no appropriate files in {}".format(filepath))
+                logger.error(f"There are no appropriate files in {filepath}")
         else:
             self.extension = get_extension(filepath)
             mediatype = get_media_type(self.extension)
-
-            # todo Ensure that filename was not rejected.
-#            if self.filename:
             if mediatype == 'video':
                 self.filename, self.season, self.episode, self.disc = get_parsible_video_name(filepath)
-                # if hasattr(self, "season"):
                 if self.season:
                     # If we were able to find a season this is a tv show
                     mediatype = 'tv'
@@ -85,13 +81,16 @@ class MediaManager():
             func()
             self.final_filename = self.final_filename.replace(":", " -").replace('"', '')
             logger.debug(f"Using {self.final_filename} as final file name.")
+
             try:
                 logger.debug(f"Attempting to set {mediatype}_dir")
-                _target = escape_specials(self.settings[f'{mediatype}_dir'].format(media_type=mediatype) + self.final_filename)
+                template = Environment(loader=BaseLoader).from_string(self.settings[f'{mediatype}_dir'])
+                _target = escape_specials(template.render(media_type=mediatype) + self.final_filename)
                 logger.debug(f"...{_target}")
             except KeyError:
                 logger.debug(f"{mediatype}_dir not found, attempting destination dir.")
-                _target = escape_specials(self.settings['destination_dir'].format(media_type=mediatype) + self.final_filename)
+                template = Environment(loader=BaseLoader).from_string(self.settings['destination_dir'])
+                _target = escape_specials(template.render(media_type=mediatype) + self.final_filename)
                 logger.debug(f"...{_target}")
             logger.debug(f"Using {_target}")
             new_medObj = MediaObject(filepath, os.path.dirname(_target), _target, self.settings['smb_user'], self.settings['smb_pass'])
@@ -156,7 +155,7 @@ class MediaManager():
             logger.debug("Using Wikipedia for episode name.")
             episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace('"', '')
         episode_name = episode_name.replace("'", "")
-        logger.debug("Found episode {}".format(episode_name))
+        logger.debug(f"Found episode {episode_name}")
         template = Environment(loader=BaseLoader).from_string(self.settings['tv_schema'])
         self.final_filename = template.render(
             series_name=series_name,
@@ -165,13 +164,6 @@ class MediaManager():
             episode_name=episode_name,
             extension=self.extension
         )
-        # self.final_filename = self.settings['tv_schema'].format(
-        #     series_name=series_name,
-        #     season_number=str(self.season).zfill(2),
-        #     episode_number=str(self.episode).zfill(2),
-        #     episode_name=episode_name,
-        #     extension=self.extension
-        # )
         logger.debug(f"Using {self.final_filename} as final file name.")
 
 
@@ -210,7 +202,7 @@ class MediaManager():
         split = False
         try:
             movie = ai.search_movie(self.filename)[0]
-            logger.debug("Found movie {}".format(movie['title']))
+            logger.debug(f"Found movie {movie['title']}")
         except IndexError:
             logger.warning("Looks like IMDB didn't respond. Falling back to split.")
             movie_list = re.split(r'\s\(', self.filename)
@@ -229,12 +221,6 @@ class MediaManager():
             year_of_release=year_of_release,
             extension=self.extension
         )
-        # final_filename = self.settings['movie_schema'].format(
-        #     movie_name=movie_name,
-        #     year_of_release = year_of_release,
-        #     extension = self.extension
-        # )
-        # remove any extra spaces
         self.final_filename = re.sub(' +', ' ', final_filename)
         logger.debug(f"Using {self.final_filename} as final file name.")
 
@@ -273,13 +259,6 @@ class MediaManager():
             track_title=track_title,
             extension=self.extension
         )
-        # self.final_filename = self.settings['music_schema'].format(
-        #     artist_name=artist_name,
-        #     album_name=album_name,
-        #     track_number=track_number,
-        #     track_title=track_title,
-        #     extension=self.extension
-        # )
 
 
 def construct_ffmpeg_copy(source_file:str, destination_file:str) -> list:

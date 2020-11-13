@@ -1,7 +1,7 @@
 import shutil
 import subprocess
 import sys
-
+from jinja2 import Environment, BaseLoader
 import pylast
 from pytvdbapi.error import TVDBIndexError, ConnectionError, BadData
 import os
@@ -157,13 +157,21 @@ class MediaManager():
             episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace('"', '')
         episode_name = episode_name.replace("'", "")
         logger.debug("Found episode {}".format(episode_name))
-        self.final_filename = self.settings['tv_schema'].format(
+        template = Environment(loader=BaseLoader).from_string(self.settings['tv_schema'])
+        self.final_filename = template.render(
             series_name=series_name,
             season_number=str(self.season).zfill(2),
             episode_number=str(self.episode).zfill(2),
             episode_name=episode_name,
             extension=self.extension
         )
+        # self.final_filename = self.settings['tv_schema'].format(
+        #     series_name=series_name,
+        #     season_number=str(self.season).zfill(2),
+        #     episode_number=str(self.episode).zfill(2),
+        #     episode_name=episode_name,
+        #     extension=self.extension
+        # )
         logger.debug(f"Using {self.final_filename} as final file name.")
 
 
@@ -215,11 +223,17 @@ class MediaManager():
         # ensure 'the', 'an', 'a', etc is moved to the end of the movie name.
         movie_name = move_article_to_end(movie_name)
         year_of_release = movie['year']
-        final_filename = self.settings['movie_schema'].format(
+        template = Environment(loader=BaseLoader).from_string(self.settings['movie_schema'])
+        final_filename = template.render(
             movie_name=movie_name,
-            year_of_release = year_of_release,
-            extension = self.extension
+            year_of_release=year_of_release,
+            extension=self.extension
         )
+        # final_filename = self.settings['movie_schema'].format(
+        #     movie_name=movie_name,
+        #     year_of_release = year_of_release,
+        #     extension = self.extension
+        # )
         # remove any extra spaces
         self.final_filename = re.sub(' +', ' ', final_filename)
         logger.debug(f"Using {self.final_filename} as final file name.")
@@ -251,13 +265,21 @@ class MediaManager():
         mut_file['ALBUM'] = album_name
         mut_file['ARTIST'] = artist_name
         mut_file.save(self.filepath)
-        self.final_filename = self.settings['music_schema'].format(
+        template = Environment(loader=BaseLoader).from_string(self.settings['music_schema'])
+        self.final_filename = template.render(
             artist_name=artist_name,
             album_name=album_name,
             track_number=track_number,
             track_title=track_title,
             extension=self.extension
         )
+        # self.final_filename = self.settings['music_schema'].format(
+        #     artist_name=artist_name,
+        #     album_name=album_name,
+        #     track_number=track_number,
+        #     track_title=track_title,
+        #     extension=self.extension
+        # )
 
 
 def construct_ffmpeg_copy(source_file:str, destination_file:str) -> list:

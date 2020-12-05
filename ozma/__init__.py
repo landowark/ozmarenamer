@@ -79,7 +79,7 @@ class MediaManager():
             func = FUNCTION_MAP[mediatype]
             logger.debug(f"Selected {func} as search function.")
             func()
-            self.final_filename = self.final_filename.replace(":", " -").replace('"', '')
+            self.final_filename = self.final_filename.replace(":", " -").replace('"', '').replace("'", "\\'")
             logger.debug(f"Using {self.final_filename} as final file name.")
 
             try:

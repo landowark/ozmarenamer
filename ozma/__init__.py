@@ -230,20 +230,31 @@ class MediaManager():
         logger.debug(f"Getting music from {self.filepath}")
         ai = pylast.LastFMNetwork(api_key=self.settings['lastfmkey'], api_secret=self.settings['lastfmsec'])
         searched_artist = pylast.ArtistSearch(artist_name=self.artist, network=ai).get_next_page()[0]
-        url = re.findall(r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))", searched_artist.get_name())
-        if len(url) > 0:
-            artist_name = self.artist
-        else:
-            artist_name = searched_artist.get_name()
-        track = pylast.TrackSearch(artist_name=artist_name, track_title=self.title, network=ai).get_next_page()[0]
-        track_title = track.get_name()
-        logger.debug(f"We got {track_title} as title.")
-        artist_name = move_article_to_end(track.get_artist().get_name())
-        logger.debug(f"We got {artist_name} as artist.")
-        album = track.get_album()
-        print(album)
-        album_name = album.get_name()
-        logger.debug(f"We got {album_name} as album.")
+        # url = re.findall(r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))", searched_artist.get_name())
+        # if len(url) > 0:
+        #     artist_name = self.artist
+        # else:
+        #     artist_name = searched_artist.get_name()
+        try:
+            track = pylast.TrackSearch(artist_name=searched_artist.get_name(), track_title=self.title, network=ai).get_next_page()[0]
+            track_title = track.get_name()
+            logger.debug(f"We got {track_title} as title.")
+            artist_name = move_article_to_end(track.get_artist().get_name())
+            logger.debug(f"We got {artist_name} as artist.")
+            album = track.get_album()
+            album_name = album.get_name()
+            logger.debug(f"We got {album_name} as album.")
+        except AttributeError as e:
+            logger.error(f"There was a problem with track search. {e} Likely due to bad artist search.")
+            logger.debug("Attempting again with unsearched artist...")
+            track = pylast.TrackSearch(artist_name=self.artist, track_title=self.title, network=ai).get_next_page()[0]
+            track_title = track.get_name()
+            logger.debug(f"We got {track_title} as title.")
+            artist_name = move_article_to_end(track.get_artist().get_name())
+            logger.debug(f"We got {artist_name} as artist.")
+            album = track.get_album()
+            album_name = album.get_name()
+            logger.debug(f"We got {album_name} as album.")
         track_list = [track.get_name().lower() for track in album.get_tracks()]
         try:
             track_number = str([i for i, x in enumerate(track_list) if x == track_title.lower()][0]+1).zfill(2)

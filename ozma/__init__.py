@@ -256,6 +256,7 @@ class MediaManager():
             album_name = album.get_name()
             logger.debug(f"We got {album_name} as album.")
         track_list = [track.get_name().lower() for track in album.get_tracks()]
+        track_title = difflib.get_close_matches(track_title, track_list)[0]
         try:
             track_number = str([i for i, x in enumerate(track_list) if x == track_title.lower()][0]+1).zfill(2)
         except IndexError as e:

@@ -266,7 +266,7 @@ class MediaManager():
         mut_file['TRACKNUMBER'] = track_number
         mut_file['TRACKTOTAL'] = track_total
         mut_file['TITLE'] = track_title
-        mut_file['ALBUM'] = album_nameprim
+        mut_file['ALBUM'] = album_name
         mut_file['ARTIST'] = artist_name
         mut_file.save(self.filepath)
         template = Environment(loader=BaseLoader).from_string(self.settings['music_schema'])

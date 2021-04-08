@@ -16,11 +16,13 @@ import difflib
 from .tools.plex import get_all_series_names
 from ssl import SSLCertVerificationError
 from .tools import tv_wikipedia, get_extension, get_media_type, get_parsible_video_name, \
-    move_article_to_end, escape_specials, extract_files_if_folder, check_for_year, get_parsible_audio_name
+    move_article_to_end, escape_specials, extract_files_if_folder, check_for_year, get_parsible_audio_name, \
+    exiftool_change
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 from smb.SMBConnection import SMBConnection
 from smb.smb_structs import OperationFailure
 import mutagen
+
 
 logger = setup_logger()
 
@@ -165,6 +167,7 @@ class MediaManager():
             extension=self.extension
         )
         logger.debug(f"Using {self.final_filename} as final file name.")
+        exiftool_change({"title":episode_name}, self.filepath)
 
 
     def parse_series_name(self, series_name, ai):
@@ -223,6 +226,7 @@ class MediaManager():
         )
         self.final_filename = re.sub(' +', ' ', final_filename)
         logger.debug(f"Using {self.final_filename} as final file name.")
+        exiftool_change({"title": movie_name}, self.filepath)
 
 
     def search_music(self):

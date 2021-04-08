@@ -6,6 +6,7 @@ import logging
 from datetime import datetime
 import shutil
 import unicodedata
+import exiftool
 
 logger = logging.getLogger("ozma.tools")
 strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED", "DVDRip", "HC",
@@ -218,3 +219,14 @@ def remove_accents(input_str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
     only_ascii = nfkd_form.encode('ASCII', 'ignore')
     return only_ascii.decode("utf-8")
+
+
+def exiftool_change(input_dict, filename):
+    logger.debug(f"Attempting to set metadata {input_dict} of {filename} with exiftool")
+    with exiftool.ExifTool(executable_="/usr/bin/exiftool") as tool:
+        tool.set_tags(input_dict, filename)
+    original_path = filename + "_original"
+    if os.path.exists(original_path):
+        os.remove(original_path)
+    else:
+        logger.debug("Original file does not exist.")

@@ -156,7 +156,7 @@ class MediaManager():
         else:
             logger.debug("Using Wikipedia for episode name.")
             episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace('"', '')
-        episode_name = episode_name.replace("'", "")
+        episode_name = episode_name.replace("'", "").replace("?", "")
         logger.debug(f"Found episode {episode_name}")
         template = Environment(loader=BaseLoader).from_string(self.settings['tv_schema'])
         self.final_filename = template.render(

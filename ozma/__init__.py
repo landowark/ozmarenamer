@@ -156,7 +156,7 @@ class MediaManager():
         else:
             logger.debug("Using Wikipedia for episode name.")
             episode_name = tv_wikipedia.wikipedia_tv_episode_search(series_name, self.season, self.episode).replace('"', '')
-        episode_name = episode_name.replace("'", "").replace("?", "")
+        episode_name = str(episode_name).replace("'", "").replace("?", "")
         logger.debug(f"Found episode {episode_name}")
         template = Environment(loader=BaseLoader).from_string(self.settings['tv_schema'])
         self.final_filename = template.render(
@@ -167,7 +167,10 @@ class MediaManager():
             extension=self.extension
         )
         logger.debug(f"Using {self.final_filename} as final file name.")
-        exiftool_change({"title":episode_name}, self.filepath)
+        if os.uname().nodename != 'landons-laptop':
+            exiftool_change({"title":episode_name}, self.filepath)
+        else:
+            logger.warning("No exif on test platform!")
 
 
     def parse_series_name(self, series_name, ai):

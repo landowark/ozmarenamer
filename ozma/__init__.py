@@ -126,7 +126,7 @@ class MediaManager():
             logger.debug("tvdbkey was empty, using IMDb.")
             ai = IMDb()
         series = self.parse_series_name(self.filename, ai)
-        logger.debug(f"Got {series} as series.")
+        logger.debug(f"Got {series.SeriesName} as series.")
         if isinstance(series, api.Show):
             logger.debug("Using TVDb for series name.")
             series_name = move_article_to_end(series.SeriesName)
@@ -217,7 +217,7 @@ class MediaManager():
             logger.debug(f"Gonna try to enforce with Plex series on {series_name.SeriesName}")
             logger.debug(series_name.FirstAired)
             best_series = process.extractOne(series_name.SeriesName, plex_series)
-            logger.debug(best_series)
+            # logger.debug(best_series)
             if best_series[1] >= 90:
                 logger.debug(f"Plex enforced series: {best_series}")
                 if series_name.SeriesName != best_series[0]:
@@ -226,7 +226,7 @@ class MediaManager():
                     # series_name.SeriesName = best_series[0]
                 else:
                     logger.debug("No changes necessary. Proceeding.")
-                    series_name.SeriesName = best_series[0]
+                series_name.SeriesName = best_series[0]
         return series_name
 
     def search_movie(self):

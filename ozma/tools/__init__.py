@@ -230,3 +230,5 @@ def exiftool_change(input_dict, filename):
         os.remove(original_path)
     else:
         logger.debug("Original file does not exist.")
+
+

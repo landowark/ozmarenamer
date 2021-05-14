@@ -1,3 +1,7 @@
+"""
+Checks wikipedia as a last resort to get episodes.
+"""
+
 import wikipedia as wkp
 import requests
 from bs4 import BeautifulSoup as bs

@@ -182,7 +182,7 @@ class MediaManager():
                 plex_series = get_all_series_names(self.settings['plex_url'], self.settings['plex_token'])
             except requests.exceptions.ConnectionError:
                 logger.debug("No plex")
-                plex_series = [series_name]
+                plex_series = [series_name.SeriesName]
         if isinstance(ai, api.TVDB):
             try:
                 series_name = ai.search(series_name, self.settings['main_language'])
@@ -215,14 +215,17 @@ class MediaManager():
         # compare series to series in plex to keep series names consistent
         if "plex_url" in self.settings:
             logger.debug(f"Gonna try to enforce with Plex series on {series_name.SeriesName}")
+            logger.debug(series_name.FirstAired)
             best_series = process.extractOne(series_name.SeriesName, plex_series)
             logger.debug(best_series)
             if best_series[1] >= 90:
-                logger.debug(f"Plex enforced series: {series_name.SeriesName}")
+                logger.debug(f"Plex enforced series: {best_series}")
                 if series_name.SeriesName != best_series[0]:
                     logger.debug(f"Okay, gonna try again with {best_series[0]}")
-                    # self.parse_series_name(best_series[0], ai)
-                    series_name.SeriesName = best_series[0]
+                    self.parse_series_name(best_series[0], ai)
+                    # series_name.SeriesName = best_series[0]
+                else:
+                    logger.debug("No changes necessary. Proceeding.")
         return series_name
 
     def search_movie(self):

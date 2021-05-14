@@ -226,6 +226,7 @@ class MediaManager():
                     # series_name.SeriesName = best_series[0]
                 else:
                     logger.debug("No changes necessary. Proceeding.")
+                    series_name.SeriesName = best_series[0]
         return series_name
 
     def search_movie(self):

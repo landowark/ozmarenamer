@@ -216,6 +216,7 @@ class MediaManager():
         if "plex_url" in self.settings:
             logger.debug(f"Gonna try to enforce with Plex series on {series_name.SeriesName}")
             best_series = process.extractOne(series_name.SeriesName, plex_series)
+            logger.debug(best_series)
             if best_series[1] >= 90:
                 logger.debug(f"Plex enforced series: {series_name.SeriesName}")
                 if series_name.SeriesName != best_series[0]:

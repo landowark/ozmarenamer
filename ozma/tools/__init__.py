@@ -161,9 +161,9 @@ def get_disc(filename):
 
 def get_title_artist(filename:str):
     # for music
-    title = filename.split("-")[1].strip()
+    title = filename.split(" - ")[1].strip()
     logger.debug(f"Got {title} for title.")
-    artist = filename.split("-")[0].strip()
+    artist = filename.split(" - ")[0].strip()
     logger.debug(f"Got {artist} for artist.")
     return title, artist
 

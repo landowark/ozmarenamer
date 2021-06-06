@@ -238,13 +238,19 @@ class MediaManager():
             logger.debug(f"Found movie {movie['title']}")
         except IndexError:
             logger.warning("Looks like IMDB didn't respond. Falling back to split.")
+            # split on year found to remove extraneous info
+
             movie_list = re.split(r'\s\(', self.filename)
+
             logger.debug(movie_list)
             movie = {'title': movie_list[0], 'year': check_for_year(filename=self.filename)}
         movie_name = movie['title']
+        logger.debug(f"Using movie name {movie['title']}")
         # Remove any extra instances of the movie's year.
         year_regex = re.compile(r'\({year}\)'.format(year=movie['year']))
         movie_name = year_regex.sub("", movie_name)
+        director_regex = re.compile(r"Directors? Cut", re.IGNORECASE)
+        movie_name = director_regex.sub("(Director Cut)", movie_name)
         # ensure 'the', 'an', 'a', etc is moved to the end of the movie name.
         movie_name = move_article_to_end(movie_name)
         year_of_release = movie['year']
@@ -254,7 +260,9 @@ class MediaManager():
             year_of_release=year_of_release,
             extension=self.extension
         )
+        # clear extra spaces
         self.final_filename = re.sub(' +', ' ', final_filename)
+        # Split on year of release to remove extraneous data
         logger.debug(f"Using {self.final_filename} as final file name.")
         exiftool_change({"title": movie_name}, self.filepath)
 

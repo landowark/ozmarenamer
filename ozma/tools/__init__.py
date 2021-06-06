@@ -42,6 +42,11 @@ def get_parsible_video_name(filepath:str):
     filename = filename.replace(".", " ")
     # non-greedy regex to remove things in square brackets
     filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
+
+    # Split on year released to remove extraneous info.
+    year_released = check_for_year(filename)
+    filename = filename.split(year_released)[0] + year_released
+
     for word in strip_list:
         # regex to remove anything in strip list
         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)

@@ -45,6 +45,7 @@ def get_parsible_video_name(filepath:str):
 
     # Split on year released to remove extraneous info.
     year_released = check_for_year(filename)
+    # todo maybe change this to "if filename.etc is not nonetype
     try:
         filename = filename.split(year_released)[0] + year_released
     except TypeError:

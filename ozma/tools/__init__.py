@@ -45,8 +45,10 @@ def get_parsible_video_name(filepath:str):
 
     # Split on year released to remove extraneous info.
     year_released = check_for_year(filename)
-    filename = filename.split(year_released)[0] + year_released
-
+    try:
+        filename = filename.split(year_released)[0] + year_released
+    except TypeError:
+        logger.warning("No year found in title, probably a TV show, carrying on.")
     for word in strip_list:
         # regex to remove anything in strip list
         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)

@@ -272,6 +272,7 @@ class MediaManager():
         logger.debug(f"Getting music from {self.filepath}")
         ai = pylast.LastFMNetwork(api_key=self.settings['lastfmkey'], api_secret=self.settings['lastfmsec'])
         searched_artist = pylast.ArtistSearch(artist_name=self.artist, network=ai).get_next_page()[0]
+        logger.debug(f"Using {searched_artist} as searched artist.")
         # url = re.findall(r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))", searched_artist.get_name())
         # if len(url) > 0:
         #     artist_name = self.artist
@@ -279,6 +280,7 @@ class MediaManager():
         #     artist_name = searched_artist.get_name()
         try:
             track = pylast.TrackSearch(artist_name=searched_artist.get_name(), track_title=self.title, network=ai).get_next_page()[0]
+            logger.debug(f"We got this track: {track.__dict__}")
             track_title = track.get_name()
             logger.debug(f"We got {track_title} as title.")
             artist_name = move_article_to_end(track.get_artist().get_name())
@@ -288,8 +290,10 @@ class MediaManager():
             logger.debug(f"We got {album_name} as album.")
         except AttributeError as e:
             logger.error(f"There was a problem with track search. {e} Likely due to bad artist search.")
-            logger.debug("Attempting again with unsearched artist...")
-            track = pylast.TrackSearch(artist_name=self.artist, track_title=self.title, network=ai).get_next_page()[0]
+            logger.debug("Attempting again with unsearched artist... Maybe without articles at the beginning")
+            new_artist = re.sub(re.compile("the ", re.IGNORECASE), "", self.artist)
+            # new_artist = move_article_to_end(self.artist)
+            track = pylast.TrackSearch(artist_name=new_artist, track_title=self.title, network=ai).get_next_page()[0]
             track_title = track.get_name()
             logger.debug(f"We got {track_title} as title.")
             artist_name = move_article_to_end(track.get_artist().get_name())

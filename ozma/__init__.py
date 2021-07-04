@@ -292,7 +292,6 @@ class MediaManager():
             logger.error(f"There was a problem with track search. {e} Likely due to bad artist search.")
             logger.debug("Attempting again with unsearched artist... Maybe without articles at the beginning")
             new_artist = re.sub(re.compile("the ", re.IGNORECASE), "", self.artist)
-            # new_artist = move_article_to_end(self.artist)
             track = pylast.TrackSearch(artist_name=new_artist, track_title=self.title, network=ai).get_next_page()[0]
             track_title = track.get_name()
             logger.debug(f"We got {track_title} as title.")

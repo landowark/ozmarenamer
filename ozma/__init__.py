@@ -1,7 +1,6 @@
 import shutil
 import subprocess
 import sys
-
 import requests.exceptions
 from jinja2 import Environment, BaseLoader
 import pylast
@@ -19,7 +18,7 @@ from .tools.plex import get_all_series_names
 from ssl import SSLCertVerificationError
 from .tools import tv_wikipedia, get_extension, get_media_type, get_parsible_video_name, \
     move_article_to_end, escape_specials, extract_files_if_folder, check_for_year, get_parsible_audio_name, \
-    exiftool_change
+    exiftool_change, get_artist_with_lastfm, get_track_with_lastfm
 from .setup.custom_loggers import GroupWriteRotatingFileHandler
 from smb.SMBConnection import SMBConnection
 from smb.smb_structs import OperationFailure
@@ -29,9 +28,9 @@ from fuzzywuzzy import fuzz, process
 
 logger = setup_logger()
 
-def rreplace(s, old, new, occurrence):
-     li = s.rsplit(old, occurrence)
-     return new.join(li)
+# def rreplace(s, old, new, occurrence):
+#      li = s.rsplit(old, occurrence)
+#      return new.join(li)
 
 
 class MediaObject():
@@ -267,59 +266,40 @@ class MediaManager():
         exiftool_change({"title": movie_name}, self.filepath)
 
 
-    def search_music(self):
+    def search_music(self, **kwargs):
+        # recursion to hopefully fix errors.
+
         mut_file = mutagen.File(self.filepath)
         logger.debug(f"Getting music from {self.filepath}")
-        ai = pylast.LastFMNetwork(api_key=self.settings['lastfmkey'], api_secret=self.settings['lastfmsec'])
-        searched_artist = pylast.ArtistSearch(artist_name=self.artist, network=ai).get_next_page()[0]
-        logger.debug(f"Using {searched_artist} as searched artist.")
+        searched_artist = get_artist_with_lastfm(self.settings, self.artist)
         # url = re.findall(r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))", searched_artist.get_name())
         # if len(url) > 0:
         #     artist_name = self.artist
         # else:
         #     artist_name = searched_artist.get_name()
-        try:
-            track = pylast.TrackSearch(artist_name=searched_artist.get_name(), track_title=self.title, network=ai).get_next_page()[0]
-            logger.debug(f"We got this track: {track.__dict__}")
-            track_title = track.get_name()
-            logger.debug(f"We got {track_title} as title.")
-            artist_name = move_article_to_end(track.get_artist().get_name())
-            logger.debug(f"We got {artist_name} as artist.")
-            album = track.get_album()
-            album_name = album.get_name()
-            logger.debug(f"We got {album_name} as album.")
-        except AttributeError as e:
-            logger.error(f"There was a problem with track search. {e} Likely due to bad artist search.")
-            logger.debug("Attempting again with unsearched artist... Maybe without articles at the beginning")
-            new_artist = re.sub(re.compile("the ", re.IGNORECASE), "", self.artist)
-            track = pylast.TrackSearch(artist_name=new_artist, track_title=self.title, network=ai).get_next_page()[0]
-            track_title = track.get_name()
-            logger.debug(f"We got {track_title} as title.")
-            artist_name = move_article_to_end(track.get_artist().get_name())
-            logger.debug(f"We got {artist_name} as artist.")
-            album = track.get_album()
-            album_name = album.get_name()
-            logger.debug(f"We got {album_name} as album.")
-        track_list = [track.get_name().lower() for track in album.get_tracks()]
-        track_title = difflib.get_close_matches(track_title, track_list)[0].title()
-        try:
-            track_number = str([i for i, x in enumerate(track_list) if x == track_title.lower()][0]+1).zfill(2)
-        except IndexError as e:
-            logger.error(f"Couldn't get track number of {track_title} in {track_list}")
-        track_total = str(len(track_list))
+        # try:
+        #     pass
+        # except AttributeError as e:
+        #     logger.error(f"There was a problem with track search. {e} Likely due to bad artist search.")
+        #     logger.debug("Attempting again with unsearched artist... Maybe without articles at the beginning")
+        #     new_artist = re.sub(re.compile("the |an |a ", re.IGNORECASE), "", self.artist)
+        #     if "optional_recursive_artist" not in kwargs:
+        #         self.search_music(optional_recursive_artist=new_artist)
+        #     return
+        track = get_track_with_lastfm(self.settings, self.artist, self.title)
         logger.debug("Using mutagen to update metadata.")
-        mut_file['TRACKNUMBER'] = track_number
-        mut_file['TRACKTOTAL'] = track_total
-        mut_file['TITLE'] = track_title
-        mut_file['ALBUM'] = album_name
-        mut_file['ARTIST'] = artist_name
+        mut_file['TRACKNUMBER'] = track['track_number']
+        mut_file['TRACKTOTAL'] = track['track_total']
+        mut_file['TITLE'] = track['track_title']
+        mut_file['ALBUM'] = track['album_name']
+        mut_file['ARTIST'] = track['artist_name']
         mut_file.save(self.filepath)
         template = Environment(loader=BaseLoader).from_string(self.settings['music_schema'])
         self.final_filename = template.render(
-            artist_name=artist_name,
-            album_name=album_name,
-            track_number=track_number,
-            track_title=track_title,
+            artist_name=track['artist_name'],
+            album_name=track['album_name'],
+            track_number=track['track_number'],
+            track_title=track['track_title'],
             extension=self.extension
         )
 

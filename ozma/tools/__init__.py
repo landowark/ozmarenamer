@@ -1,3 +1,4 @@
+import difflib
 import os
 import re
 import wordninja as wn
@@ -7,6 +8,7 @@ from datetime import datetime
 import shutil
 import unicodedata
 import exiftool
+import pylast
 
 logger = logging.getLogger("ozma.tools")
 strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED", "DVDRip", "HC",
@@ -240,3 +242,58 @@ def exiftool_change(input_dict, filename):
         logger.debug("Original file does not exist.")
 
 
+def get_artist_with_lastfm(settings, artist, **kwargs):
+    ai = pylast.LastFMNetwork(api_key=settings['lastfmkey'], api_secret=settings['lastfmsec'])
+    searched_artist = pylast.ArtistSearch(artist_name=artist, network=ai).get_next_page()[0]
+    logger.debug(f"Returning {searched_artist} as searched artist.")
+    return searched_artist
+
+
+def get_track_with_lastfm(settings, artist, title, **kwargs):
+    if "optional_recursive_artist" in kwargs:
+        #     make switch to avoid recalling
+        logger.debug("Running second attempt at search music...")
+        artist = kwargs['optional_recursive_artist']
+    ai = pylast.LastFMNetwork(api_key=settings['lastfmkey'], api_secret=settings['lastfmsec'])
+    # check what kind of artist variable we're being passed.
+    if isinstance(artist, pylast.Artist):
+        track = pylast.TrackSearch(artist_name=artist.get_name(), track_title=title, network=ai).get_next_page()[0]
+    elif isinstance(artist, str):
+        track = pylast.TrackSearch(artist_name=artist, track_title=title, network=ai).get_next_page()[0]
+    else:
+        logger.error("Artist is not an acceptable class.")
+        raise TypeError
+    if isinstance(track, pylast.Track):
+        return_track = {}
+        logger.debug(f"We got this track: {track.__dict__}")
+        print(f"We got this track: {track.__dict__}")
+        return_track['track_title'] = track.get_name()
+        logger.debug(f"We got {return_track['track_title']} as title.")
+        return_track['artist_name'] = move_article_to_end(track.get_artist().get_name())
+        logger.debug(f"We got {return_track['artist_name']} as artist.")
+        album = track.get_album()
+        if isinstance(album, pylast.Album):
+            return_track['album_name'] = album.get_name()
+            logger.debug(f"We got {return_track['album_name']} as album.")
+        else:
+            logger.warning("Got no album , likely due to faulty artist search. Recursion attempt with article removal.")
+            if "optional_recursive_artist" not in kwargs:
+                return_track = get_track_with_lastfm(settings, artist, title, optional_recursive_artist=re.sub(re.compile("the |an |a ", re.IGNORECASE), "", artist))
+    else:
+        logger.error("Search was not successful, did not produce track.")
+        raise TypeError
+    return_track['track_title'], return_track['track_number'], return_track['track_totla'] = get_album_info(return_track['track_title'], album)
+    logger.debug(f"Using {return_track} as final track.")
+    print(f"Using {return_track} as final track.")
+    return return_track
+
+
+def get_album_info(track_title:str, album:pylast.Album):
+    track_list = [track.get_name().lower() for track in album.get_tracks()]
+    track_title = difflib.get_close_matches(track_title, track_list)[0].title()
+    try:
+        track_number = str([i for i, x in enumerate(track_list) if x == track_title.lower()][0] + 1).zfill(2)
+    except IndexError as e:
+        logger.error(f"Couldn't get track number of {track_title} in {track_list}")
+    track_total = str(len(track_list))
+    return track_title, track_number, track_total

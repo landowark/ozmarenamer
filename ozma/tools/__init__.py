@@ -225,6 +225,7 @@ def escape_specials(input:str) -> str:
         input = input.replace(special, f"\\{special}")
     return input
 
+
 def remove_accents(input_str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
     only_ascii = nfkd_form.encode('ASCII', 'ignore')
@@ -249,7 +250,7 @@ def get_artist_with_lastfm(settings, artist, **kwargs):
     return searched_artist
 
 
-def get_track_with_lastfm(settings, artist, title, **kwargs):
+def get_track_with_lastfm(settings:dict, artist, title:str, **kwargs):
     if "optional_recursive_artist" in kwargs:
         #     make switch to avoid recalling
         logger.debug("Running second attempt at search music...")
@@ -257,16 +258,18 @@ def get_track_with_lastfm(settings, artist, title, **kwargs):
     ai = pylast.LastFMNetwork(api_key=settings['lastfmkey'], api_secret=settings['lastfmsec'])
     # check what kind of artist variable we're being passed.
     if isinstance(artist, pylast.Artist):
-        track = pylast.TrackSearch(artist_name=artist.get_name(), track_title=title, network=ai).get_next_page()[0]
+        artist_str = artist.get_name()
+        logger.debug("Using pylast Artist instance")
     elif isinstance(artist, str):
-        track = pylast.TrackSearch(artist_name=artist, track_title=title, network=ai).get_next_page()[0]
+        logger.debug("Using string for artist name.")
+        artist_str = artist
     else:
         logger.error("Artist is not an acceptable class.")
         raise TypeError
+    track = pylast.TrackSearch(artist_name=artist_str, track_title=title, network=ai).get_next_page()[0]
     if isinstance(track, pylast.Track):
         return_track = {}
         logger.debug(f"We got this track: {track.__dict__}")
-        print(f"We got this track: {track.__dict__}")
         return_track['track_title'] = track.get_name()
         logger.debug(f"We got {return_track['track_title']} as title.")
         return_track['artist_name'] = move_article_to_end(track.get_artist().get_name())
@@ -275,17 +278,20 @@ def get_track_with_lastfm(settings, artist, title, **kwargs):
         if isinstance(album, pylast.Album):
             return_track['album_name'] = album.get_name()
             logger.debug(f"We got {return_track['album_name']} as album.")
+            return_track['track_title'], return_track['track_number'], return_track['track_total'] = get_album_info(
+                return_track['track_title'], album)
+            logger.debug(f"Using {return_track} as final track.")
+            return return_track
         else:
             logger.warning("Got no album , likely due to faulty artist search. Recursion attempt with article removal.")
             if "optional_recursive_artist" not in kwargs:
-                return_track = get_track_with_lastfm(settings, artist, title, optional_recursive_artist=re.sub(re.compile("the |an |a ", re.IGNORECASE), "", artist))
+                new_artist = re.sub(re.compile(r"the |an |a ", re.IGNORECASE), "", artist_str)
+                return_track = get_track_with_lastfm(settings, artist, title, optional_recursive_artist=new_artist)
+                logger.debug(f"In the recursion we got {return_track['album_name']} as album.")
+                return return_track
     else:
         logger.error("Search was not successful, did not produce track.")
         raise TypeError
-    return_track['track_title'], return_track['track_number'], return_track['track_totla'] = get_album_info(return_track['track_title'], album)
-    logger.debug(f"Using {return_track} as final track.")
-    print(f"Using {return_track} as final track.")
-    return return_track
 
 
 def get_album_info(track_title:str, album:pylast.Album):

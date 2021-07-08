@@ -3,7 +3,6 @@ import subprocess
 import sys
 import requests.exceptions
 from jinja2 import Environment, BaseLoader
-import pylast
 from pytvdbapi.error import TVDBIndexError, ConnectionError, BadData
 import os
 from .setup import get_config, get_filepath, get_media_types, setup_logger
@@ -55,7 +54,7 @@ class MediaManager():
         FUNCTION_MAP = {"book": self.search_book,
                         "tv": self.search_tv,
                         "movies": self.search_movie,
-                        "music": self.search_music}
+                        "audio": self.search_music}
         logger.debug("Starting run on {}".format(filepath))
         # if the torrent is a folder recur for each file in folder of appropriate type.
         if os.path.isdir(filepath):
@@ -77,7 +76,7 @@ class MediaManager():
                     mediatype = 'tv'
                 else:
                     mediatype = 'movies'
-            elif mediatype == "music":
+            elif mediatype == "audio":
                 self.filename, self.title, self.artist = get_parsible_audio_name(filepath)
             logger.debug(f"Setting media type as {mediatype}.")
             func = FUNCTION_MAP[mediatype]
@@ -85,7 +84,6 @@ class MediaManager():
             func()
             self.final_filename = self.final_filename.replace(":", " -").replace('"', '')
             logger.debug(f"Using {self.final_filename} as final file name.")
-
             try:
                 logger.debug(f"Attempting to set {mediatype}_dir")
                 template = Environment(loader=BaseLoader).from_string(self.settings[f'{mediatype}_dir'])
@@ -266,27 +264,11 @@ class MediaManager():
         exiftool_change({"title": movie_name}, self.filepath)
 
 
-    def search_music(self, **kwargs):
-        # recursion to hopefully fix errors.
-
+    def search_music(self):
         mut_file = mutagen.File(self.filepath)
         logger.debug(f"Getting music from {self.filepath}")
         searched_artist = get_artist_with_lastfm(self.settings, self.artist)
-        # url = re.findall(r"(?i)\b((?:https?://|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:'\".,<>?«»“”‘’]))", searched_artist.get_name())
-        # if len(url) > 0:
-        #     artist_name = self.artist
-        # else:
-        #     artist_name = searched_artist.get_name()
-        # try:
-        #     pass
-        # except AttributeError as e:
-        #     logger.error(f"There was a problem with track search. {e} Likely due to bad artist search.")
-        #     logger.debug("Attempting again with unsearched artist... Maybe without articles at the beginning")
-        #     new_artist = re.sub(re.compile("the |an |a ", re.IGNORECASE), "", self.artist)
-        #     if "optional_recursive_artist" not in kwargs:
-        #         self.search_music(optional_recursive_artist=new_artist)
-        #     return
-        track = get_track_with_lastfm(self.settings, self.artist, self.title)
+        track = get_track_with_lastfm(self.settings, searched_artist, self.title)
         logger.debug("Using mutagen to update metadata.")
         mut_file['TRACKNUMBER'] = track['track_number']
         mut_file['TRACKTOTAL'] = track['track_total']

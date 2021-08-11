@@ -13,6 +13,9 @@ logger = logging.getLogger("ozma.tv_wikipedia")
 
 def wikipedia_tv_episode_search(show: str, season, episode: int):
     page = wkp.page(wkp.search(f"List of {show} episodes")[0])
+    if isinstance(season, str):
+        season = int(season)
+    print(season)
     # The Simpsons required two wikipedia pages... so...
     if show == "Simpsons, The" and season <=20:
         url = page.url + "_(seasons_1–20)#Episodes"

@@ -1,7 +1,7 @@
 import shutil
 import subprocess
 import sys
-
+from imdb.parser.http import IMDbHTTPAccessSystem
 import requests.exceptions
 from jinja2 import Environment, BaseLoader
 import pylast
@@ -177,6 +177,7 @@ class MediaManager():
 
 
     def parse_series_name(self, series_name, ai):
+
         if "plex_url" in self.settings:
             try:
                 plex_series = get_all_series_names(self.settings['plex_url'], self.settings['plex_token'])
@@ -204,7 +205,8 @@ class MediaManager():
                 logger.error(f"Looks like no result was found: {e}")
                 logger.debug("Falling back to IMDB")
                 series_name = self.parse_series_name(self.filename, IMDb())
-        elif isinstance(ai, IMDb):
+
+        elif isinstance(ai, IMDbHTTPAccessSystem):
             # Todo flesh this out more.
             series_name = ai.search_movie(self.filename)[0]
         else:

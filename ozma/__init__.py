@@ -126,7 +126,10 @@ class MediaManager():
             logger.debug("tvdbkey was empty, using IMDb.")
             ai = IMDb()
         series = self.parse_series_name(self.filename, ai)
-        logger.debug(f"Got {series.SeriesName} as series.")
+        try:
+            logger.debug(f"Got tvdb show object {series.SeriesName} as series.")
+        except Exception as e:
+            logger.debug(f"Got string {series} as series")
         if isinstance(series, api.Show):
             logger.debug("Using TVDb for series name.")
             series_name = move_article_to_end(series.SeriesName)
@@ -199,11 +202,11 @@ class MediaManager():
                     try:
                         series_name = difflib.get_close_matches(self.filename, plex_series, 1)[0]
                     except NameError as e:
-                        logger.debug(f"We got no plex.")
+                        logger.debug(f"We got no plex. Falling back to re.split")
                         series_name = re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filepath)[0].strip()
                         return series_name
                     except IndexError:
-                        logger.debug(f"For some reason the plex list was empty.")
+                        logger.debug(f"For some reason the plex list was empty. Falling back to re.split")
                         series_name = re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filepath)[0].strip()
                         return series_name
                     logger.debug(f"Series returned from plex: {series_name}")

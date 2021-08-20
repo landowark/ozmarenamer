@@ -200,11 +200,11 @@ class MediaManager():
                         series_name = difflib.get_close_matches(self.filename, plex_series, 1)[0]
                     except NameError as e:
                         logger.debug(f"We got no plex.")
-                        series_name = self.parse_series_name(re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filepath)[0].strip(), ai=ai)
+                        series_name = re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filepath)[0].strip()
                         return series_name
                     except IndexError:
                         logger.debug(f"For some reason the plex list was empty.")
-                        series_name = self.parse_series_name(re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filepath)[0].strip(), ai=ai)
+                        series_name = re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filepath)[0].strip()
                         return series_name
                     logger.debug(f"Series returned from plex: {series_name}")
                     self.parse_series_name(series_name, ai)

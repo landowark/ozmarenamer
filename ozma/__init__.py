@@ -177,7 +177,8 @@ class MediaManager():
 
 
     def parse_series_name(self, series_name, ai):
-
+        logger.debug(f"Using series name: {series_name}")
+        logger.debug(f"Using filename: {self.filename}")
         if "plex_url" in self.settings:
             try:
                 plex_series = get_all_series_names(self.settings['plex_url'], self.settings['plex_token'])
@@ -200,9 +201,11 @@ class MediaManager():
                     except NameError as e:
                         logger.debug(f"We got no plex.")
                         series_name = re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filename)[0].strip()
+                        return series_name
                     except IndexError:
                         logger.debug(f"For some reason the plex list was empty.")
                         series_name = re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filename)[0].strip()
+                        return series_name
                     logger.debug(f"Series returned from plex: {series_name}")
                     self.parse_series_name(series_name, ai)
             except (TVDBIndexError, UnboundLocalError) as e:

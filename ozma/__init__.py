@@ -199,6 +199,10 @@ class MediaManager():
                         series_name = difflib.get_close_matches(self.filename, plex_series, 1)[0]
                     except NameError as e:
                         logger.debug(f"We got no plex.")
+                        series_name = re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filename)[0].strip()
+                    except IndexError:
+                        logger.debug(f"For some reason the plex list was empty.")
+                        series_name = re.split(r"-|\[|\]|\<|\>|\:|\(|\)|\|", self.filename)[0].strip()
                     logger.debug(f"Series returned from plex: {series_name}")
                     self.parse_series_name(series_name, ai)
             except (TVDBIndexError, UnboundLocalError) as e:

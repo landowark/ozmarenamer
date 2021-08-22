@@ -2,16 +2,18 @@ import difflib
 import os
 import re
 import wordninja as wn
-from ..setup import get_media_types, get_allowed_extensions
+from ..setup import get_media_types, get_allowed_extensions, get_config
 import logging
 from datetime import datetime
 import shutil
 import unicodedata
 import exiftool
 import pylast
+from .plex import get_all_series_names, enforce_series_with_plex
+from .wikipedia import *
 
 logger = logging.getLogger("ozma.tools")
-strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEB", "EXTENDED", "DVDRip", "HC",
+strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEBRip", "WEB", "EXTENDED", "DVDRip", "HC",
               "HDRip", "XviD", "AC3", "BRRip", "Bluray", "Internal", "AAC", "YIFY", "UNCUT"]
 rejected_filenames = ['sample']
 
@@ -38,114 +40,116 @@ def get_episode_date(filename):
         return None
 
 
-def get_parsible_video_name(filepath:str):
-    # remove season number
-    filename = remove_extension(split_file_name(filepath))
-    filename = filename.replace(".", " ")
-    # non-greedy regex to remove things in square brackets
-    filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
-
-    # Split on year released to remove extraneous info.
-    year_released = check_for_year(filename)
-    # todo maybe change this to "if filename.etc is not nonetype
-    try:
-        filename = filename.split(year_released)[0] + year_released
-    except TypeError:
-        logger.warning("No year found in title, probably a TV show, carrying on.")
-    for word in strip_list:
-        # regex to remove anything in strip list
-        regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
-        filename = re.sub(regex, "", filename)
-    # Seperate method to get season with regex
-    season = get_season(filename)
-    # Seperate method to get season with regex
-    episode = get_episode(filename)
-    logger.debug(f"Season: {season}, Episode: {episode}")
-    if season and episode:
-        # set string containing season/episode with S00E00 format
-        seasep = season + episode
-        logger.debug(f"Seasep = {seasep}")
-        filename = filename.split(seasep)[0].strip()
-    # if main method of determining Season/episode didn't work, try dxdd method
-    if not season and not episode:
-        logger.debug("No season or episode found. Attempting dxdd method.")
-        season, episode = get_season_episode_dxdd(filename)
-        if season and episode:
-            seasep = f"{season}x{episode}"
-            filename = filename.split(seasep)[0].strip()
-    # if dxdd method didn't work, try with date.
-    if not season and not episode:
-        logger.debug("No season or episode found. Attempting date method.")
-        season = get_episode_date(filename)
-        episode = None
-        if season:
-            filename = filename.split(season)[0].strip()
-            try:
-                season = datetime.strptime(season, "%Y %m %d").date()
-            except TypeError:
-                logger.debug("No season found.")
-    if season:
-        try:
-            filename = filename.replace(season.upper(), "")
-            filename = filename.replace(season.lower(), "")
-        except TypeError:
-            filename = filename.replace(season.strftime("%Y %m %d"), "")
-        except AttributeError:
-            filename = filename.replace(season.strftime("%Y %m %d"), "")
-        try:
-            season = int(season.strip("S"))
-        except ValueError:
-            season = season
-        except AttributeError:
-            season = season
-    if episode:
-        filename = filename.replace(episode.upper(), "")
-        filename = filename.replace(episode.lower(), "")
-        episode = int(episode.strip("E"))
-    # Check for a disc number for whatever reason.
-    disc = get_disc(filename)
-    if disc:
-        filename = filename.replace(disc, "")
-        disc = int(disc.strip("D"))
-    # Check for a year, should be run after the episode year check.
-    year = check_for_year(filename)
-    if year:
-        filename = filename.replace(year, "")
-    # Use word ninja to split apart words that maybe joined due to whitespace errors
-    filename = " ".join(wn.split(filename)).title()
-    if year: filename = f"{filename} ({year})"
-    if filename.lower() in rejected_filenames:
-        logger.warning(f"Found a rejected filename: {filename}. Disregarding.")
-        filename = None
-    logger.debug(f"Using filename={filename}, season={season}, episode={episode}, disc={disc}")
-    return filename, season, episode, disc
-
-
-def get_parsible_audio_name(filepath:str):
-    # remove season number
-    filename = remove_extension(split_file_name(filepath))
-    filename = filename.replace(".", " ")
-    # non-greedy regex to remove things in square brackets
-    filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
-    for word in strip_list:
-        # regex to remove anything in strip list
-        regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
-        filename = re.sub(regex, "", filename)
-    title, artist = get_title_artist(filename)
-    return filename, title, artist
+# def get_parsible_video_name(filepath:str):
+#     # remove season number
+#     filename = remove_extension(split_file_name(filepath))
+#     filename = filename.replace(".", " ")
+#     # non-greedy regex to remove things in square brackets
+#     filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
+#
+#     # Split on year released to remove extraneous info.
+#     year_released = check_for_year(filename)
+#     # todo maybe change this to "if filename.etc is not nonetype
+#     try:
+#         filename = filename.split(year_released)[0] + year_released
+#     except TypeError:
+#         logger.warning("No year found in title, probably a TV show, carrying on.")
+#     for word in strip_list:
+#         # regex to remove anything in strip list
+#         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
+#         filename = re.sub(regex, "", filename)
+#     # Seperate method to get season with regex
+#     season = get_season(filename)
+#     # Seperate method to get season with regex
+#     episode = get_episode(filename)
+#     logger.debug(f"Season: {season}, Episode: {episode}")
+#     if season and episode:
+#         # set string containing season/episode with S00E00 format
+#         seasep = season + episode
+#         logger.debug(f"Seasep = {seasep}")
+#         filename = filename.split(seasep)[0].strip()
+#     # if main method of determining Season/episode didn't work, try dxdd method
+#     if not season and not episode:
+#         logger.debug("No season or episode found. Attempting dxdd method.")
+#         season, episode = get_season_episode_dxdd(filename)
+#         if season and episode:
+#             seasep = f"{season}x{episode}"
+#             filename = filename.split(seasep)[0].strip()
+#     # if dxdd method didn't work, try with date.
+#     if not season and not episode:
+#         logger.debug("No season or episode found. Attempting date method.")
+#         season = get_episode_date(filename)
+#         episode = None
+#         if season:
+#             filename = filename.split(season)[0].strip()
+#             try:
+#                 season = datetime.strptime(season, "%Y %m %d").date()
+#             except TypeError:
+#                 logger.debug("No season found.")
+#     if season:
+#         try:
+#             filename = filename.replace(season.upper(), "")
+#             filename = filename.replace(season.lower(), "")
+#         except TypeError:
+#             filename = filename.replace(season.strftime("%Y %m %d"), "")
+#         except AttributeError:
+#             filename = filename.replace(season.strftime("%Y %m %d"), "")
+#         try:
+#             season = int(season.strip("S"))
+#         except ValueError:
+#             season = season
+#         except AttributeError:
+#             season = season
+#     if episode:
+#         filename = filename.replace(episode.upper(), "")
+#         filename = filename.replace(episode.lower(), "")
+#         episode = int(episode.strip("E"))
+#     # Check for a disc number for whatever reason.
+#     disc = get_disc(filename)
+#     if disc:
+#         filename = filename.replace(disc, "")
+#         disc = int(disc.strip("D"))
+#     # Check for a year, should be run after the episode year check.
+#     year = check_for_year(filename)
+#     if year:
+#         filename = filename.replace(year, "")
+#     # Use word ninja to split apart words that maybe joined due to whitespace errors
+#     filename = " ".join(wn.split(filename)).title()
+#     if year: filename = f"{filename} ({year})"
+#     if filename.lower() in rejected_filenames:
+#         logger.warning(f"Found a rejected filename: {filename}. Disregarding.")
+#         filename = None
+#     logger.debug(f"Using filename={filename}, season={season}, episode={episode}, disc={disc}")
+#     return filename, season, episode, disc
+#
+#
+# def get_parsible_audio_name(filepath:str):
+#     # remove season number
+#     filename = remove_extension(split_file_name(filepath))
+#     filename = filename.replace(".", " ")
+#     # non-greedy regex to remove things in square brackets
+#     filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
+#     for word in strip_list:
+#         # regex to remove anything in strip list
+#         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
+#         filename = re.sub(regex, "", filename)
+#     title, artist = get_title_artist(filename)
+#     return filename, title, artist
 
 
 def get_season(filename):
     season = re.compile(r's(?:eason)?\d{1,2}', re.IGNORECASE)
     try:
-        return re.findall(season, filename)[0].upper()
+        result = re.findall(season, filename)[0].upper()
+        return int(result.replace("S", ""))
     except:
         return None
 
 def get_episode(filename):
     episode = re.compile(r'e(?:pisode)?\d{1,2}', re.IGNORECASE)
     try:
-        return re.findall(episode, filename)[0].upper()
+        result = re.findall(episode, filename)[0].upper()
+        return int(result.replace("E", ""))
     except:
         return None
 
@@ -178,10 +182,10 @@ def get_title_artist(filename:str):
     return title, artist
 
 
-def get_media_type(extenstion):
+def get_media_type(extension):
     types = get_media_types()
     for type in types.keys():
-        if extenstion in types[type]:
+        if extension in types[type]:
             return type
 
 
@@ -303,3 +307,77 @@ def get_album_info(track_title:str, album:pylast.Album):
         logger.error(f"Couldn't get track number of {track_title} in {track_list}")
     track_total = str(len(track_list))
     return track_title, track_number, track_total
+
+
+def check_if_tv(filename):
+    if get_season(filename) != None:
+        return True
+    elif get_episode(filename) != None:
+        return True
+    elif get_season_episode_dxdd(filename) != (None, None):
+        return True
+    else:
+        return False
+
+
+def sanitize_file_name(raw:str):
+    raw = raw + "."
+    raw = raw.replace(" ", ".")
+    raw = re.sub(r"\[.+\]", "", raw)
+    for item in strip_list:
+        raw = re.sub(rf"[\.|\s|-]?{item}[\.|\s|-]", " ", raw, flags=re.I)
+    raw = raw.strip().split(" ")[0].replace(".", " ")
+    logger.debug(f"Returning sanitized filename: {raw}")
+    return raw
+
+def remove_season_episode(raw:str):
+    raw = re.sub(r'[\.|\s|-]?s(?:eason)?\d{1,2}', " ", raw, flags=re.I)
+    raw = re.sub(r'[\.|\s|-]?e(?:pisode)?\d{1,2}', " ", raw, flags=re.I)
+    return raw
+
+def enforce_series_name(basefile:str):
+    # First santize the file base name
+    series_name = sanitize_file_name(basefile)
+    series_name = remove_season_episode(series_name)
+    # We'll make the plex attempt first
+    try:
+        plex_config = get_config(section="plex")
+    except KeyError:
+        logger.warning("Plex not found in settings")
+    if "plex_settings" in locals():
+        return enforce_series_with_plex(series_name, plex_config)
+    else:
+        return enforce_series_with_wikipedia(series_name)
+
+
+def get_season_and_episode(basefile):
+    season = get_season(basefile)
+    episode = get_episode(basefile)
+    if season == None:
+        season, _ = get_season_episode_dxdd(basefile)
+    if episode == None:
+        _, episode = get_season_episode_dxdd(basefile)
+    return season, episode
+
+
+def get_episode_name(series_name:str, season_number:int, episode_number:int, tv_config:dict):
+    if "thetvdbkey" in tv_config:
+        pass
+    else:
+        episode_name, airdate = wikipedia_tv_episode_search(series_name, season_number, episode_number)
+        return episode_name, airdate
+
+
+def check_movie_title(basefile:str):
+    movie_title = sanitize_file_name(basefile)
+    year_of_release = check_for_year(movie_title)
+    movie_title = movie_title.replace(year_of_release, "").strip()
+    # Currently only wikipedia exists
+    movie_title, year_of_release = check_movie_with_wikipedia(movie_title, year_of_release)
+    return movie_title, year_of_release
+
+
+def get_movie_details(movie_title:str, release_year:str):
+    # currently only wikipedia is supported
+    director, starring =  wikipedia_movie_search(movie_title, release_year)
+    return director, starring

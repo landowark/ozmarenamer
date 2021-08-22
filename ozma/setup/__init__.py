@@ -48,7 +48,7 @@ def get_filepath():
     return cli_args['filename']
 
 
-def get_config(settings_path=""):
+def get_config(settings_path:str="", section:str="settings"):
     cParser = ConfigParser(interpolation=ExtendedInterpolation())
     # if user hasn't defined config path in cli args
     if settings_path == "":
@@ -71,7 +71,7 @@ def get_config(settings_path=""):
             sys.exit()
     logger.debug(f"Using {settings_path} for config file.")
     cParser.read(settings_path)
-    return {s:dict(cParser.items(s)) for s in cParser.sections()}['settings']
+    return {s:dict(cParser.items(s)) for s in cParser.sections()}[section]
 
 
 def get_media_types():

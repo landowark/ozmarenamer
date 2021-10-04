@@ -1,4 +1,4 @@
-from pathlib import Path
+from pathlib import Path, PurePath
 from ozma.tools import *
 import sys, inspect
 import logging
@@ -12,6 +12,14 @@ class MediaObject(object):
     def __init__(self, filepath):
         self.settings = get_config()
         self.filepath = Path(filepath)
+        if 'development' in self.settings:
+            self.development = self.settings['development']
+        else:
+            self.development = False
+        if 'move' in self.settings:
+            self.move = self.settings['move']
+        else:
+            self.move = False
         if not self.filepath.exists():
             raise FileNotFoundError("File provided does not actually exist!")
         self.basefile = self.filepath.stem
@@ -21,6 +29,8 @@ class MediaObject(object):
         self.parse_media_type()
         self.run_parse()
         self.render_schema()
+        self.create_destination()
+        logger.debug(f"We're going to use this object: {self.__dict__}")
 
     def parse_media_type(self):
         self.media_type = get_media_type(self.extension)
@@ -33,6 +43,9 @@ class MediaObject(object):
                 self.media_type = "tv"
             else:
                 self.media_type = "movie"
+        elif self.media_type == "audio":
+            # todo possibly try to make audiobooks?
+            self.media_type = "song"
         try:
             # cast this class as the class of the found media type
             self.__class__ = class_map[self.media_type]
@@ -50,8 +63,25 @@ class MediaObject(object):
 
 
     def render_schema(self):
-        self.schema = jinja2.Template(self.class_settings[f"{self.media_type}_schema"])
-        self.final_filename = self.schema.render(self.__dict__)
+        schema = jinja2.Template(self.class_settings[f"{self.media_type}_schema"])
+        self.final_filename = schema.render(self.__dict__)
+
+    def create_destination(self):
+        try:
+            schema = jinja2.Template(self.class_settings[f"{self.media_type}_destination"])
+        except KeyError:
+            logger.debug(f"No specific destination schema found for {self.media_type}. Falling back to destination_dir")
+            schema = jinja2.Template(self.settings["destination_dir"])
+        final_destination = schema.render(self.__dict__)
+        # self.final_destination = PurePath(final_destination, self.final_filename).__str__()
+        self.final_destination = final_destination + self.final_filename
+
+    def move_file(self):
+        if self.final_destination[:3] == "smb":
+            logger.debug("We've got a samba destination")
+            samba_move_file(self.filepath.__str__(), self.final_destination, self.development)
+        else:
+            normal_move_file(self.filepath.__str__(), self.final_destination, self.development, self.move)
 
 
 
@@ -68,6 +98,7 @@ class TV(MediaObject):
             logger.error("Okay, thetvdbkey didn't exist in the first place.")
         self.episode_name, temp_airdate = get_episode_name(self.series_name, self.season_number, self.episode_number, self.class_settings)
         self.airdate = temp_airdate.strftime(self.settings['date_format'])
+        self.series_name = move_article_to_end(self.series_name)
 
 
 class Movie(MediaObject):
@@ -75,3 +106,13 @@ class Movie(MediaObject):
     def run_parse(self):
         self.movie_title, self.movie_release_year = check_movie_title(self.basefile)
         self.director, self.starring = get_movie_details(self.movie_title, self.movie_release_year)
+        self.movie_title = move_article_to_end(self.movie_title)
+
+
+class Song(MediaObject):
+
+    def run_parse(self):
+        # del self.class_settings['lastfmkey'], self.class_settings['lastfmsec']
+        self.artist_name = move_article_to_end(check_artist_name(self.basefile))
+        self.track_title = check_song_name(self.basefile, self.artist_name)
+        self.album_name, self.track_number = get_song_details(self.artist_name, self.track_title, self.class_settings)

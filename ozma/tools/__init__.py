@@ -11,11 +11,17 @@ import exiftool
 import pylast
 from .plex import get_all_series_names, enforce_series_with_plex
 from .wikipedia import *
+from .lastfm import *
+from smb.SMBConnection import SMBConnection
+from smb.smb_structs import OperationFailure
+from pathlib import Path
 
 logger = logging.getLogger("ozma.tools")
 strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEBRip", "WEB", "EXTENDED", "DVDRip", "HC",
               "HDRip", "XviD", "AC3", "BRRip", "Bluray", "Internal", "AAC", "YIFY", "UNCUT"]
 rejected_filenames = ['sample']
+
+
 
 def split_file_name(filepath):
     return os.path.basename(filepath)
@@ -38,103 +44,6 @@ def get_episode_date(filename):
             return re.findall(season, filename)[0]
     except:
         return None
-
-
-# def get_parsible_video_name(filepath:str):
-#     # remove season number
-#     filename = remove_extension(split_file_name(filepath))
-#     filename = filename.replace(".", " ")
-#     # non-greedy regex to remove things in square brackets
-#     filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
-#
-#     # Split on year released to remove extraneous info.
-#     year_released = check_for_year(filename)
-#     # todo maybe change this to "if filename.etc is not nonetype
-#     try:
-#         filename = filename.split(year_released)[0] + year_released
-#     except TypeError:
-#         logger.warning("No year found in title, probably a TV show, carrying on.")
-#     for word in strip_list:
-#         # regex to remove anything in strip list
-#         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
-#         filename = re.sub(regex, "", filename)
-#     # Seperate method to get season with regex
-#     season = get_season(filename)
-#     # Seperate method to get season with regex
-#     episode = get_episode(filename)
-#     logger.debug(f"Season: {season}, Episode: {episode}")
-#     if season and episode:
-#         # set string containing season/episode with S00E00 format
-#         seasep = season + episode
-#         logger.debug(f"Seasep = {seasep}")
-#         filename = filename.split(seasep)[0].strip()
-#     # if main method of determining Season/episode didn't work, try dxdd method
-#     if not season and not episode:
-#         logger.debug("No season or episode found. Attempting dxdd method.")
-#         season, episode = get_season_episode_dxdd(filename)
-#         if season and episode:
-#             seasep = f"{season}x{episode}"
-#             filename = filename.split(seasep)[0].strip()
-#     # if dxdd method didn't work, try with date.
-#     if not season and not episode:
-#         logger.debug("No season or episode found. Attempting date method.")
-#         season = get_episode_date(filename)
-#         episode = None
-#         if season:
-#             filename = filename.split(season)[0].strip()
-#             try:
-#                 season = datetime.strptime(season, "%Y %m %d").date()
-#             except TypeError:
-#                 logger.debug("No season found.")
-#     if season:
-#         try:
-#             filename = filename.replace(season.upper(), "")
-#             filename = filename.replace(season.lower(), "")
-#         except TypeError:
-#             filename = filename.replace(season.strftime("%Y %m %d"), "")
-#         except AttributeError:
-#             filename = filename.replace(season.strftime("%Y %m %d"), "")
-#         try:
-#             season = int(season.strip("S"))
-#         except ValueError:
-#             season = season
-#         except AttributeError:
-#             season = season
-#     if episode:
-#         filename = filename.replace(episode.upper(), "")
-#         filename = filename.replace(episode.lower(), "")
-#         episode = int(episode.strip("E"))
-#     # Check for a disc number for whatever reason.
-#     disc = get_disc(filename)
-#     if disc:
-#         filename = filename.replace(disc, "")
-#         disc = int(disc.strip("D"))
-#     # Check for a year, should be run after the episode year check.
-#     year = check_for_year(filename)
-#     if year:
-#         filename = filename.replace(year, "")
-#     # Use word ninja to split apart words that maybe joined due to whitespace errors
-#     filename = " ".join(wn.split(filename)).title()
-#     if year: filename = f"{filename} ({year})"
-#     if filename.lower() in rejected_filenames:
-#         logger.warning(f"Found a rejected filename: {filename}. Disregarding.")
-#         filename = None
-#     logger.debug(f"Using filename={filename}, season={season}, episode={episode}, disc={disc}")
-#     return filename, season, episode, disc
-#
-#
-# def get_parsible_audio_name(filepath:str):
-#     # remove season number
-#     filename = remove_extension(split_file_name(filepath))
-#     filename = filename.replace(".", " ")
-#     # non-greedy regex to remove things in square brackets
-#     filename = re.sub(re.compile(r'\[.*?\]'), "", filename)
-#     for word in strip_list:
-#         # regex to remove anything in strip list
-#         regex = re.compile(r'{}[^\s]*'.format(word), re.IGNORECASE)
-#         filename = re.sub(regex, "", filename)
-#     title, artist = get_title_artist(filename)
-#     return filename, title, artist
 
 
 def get_season(filename):
@@ -186,15 +95,18 @@ def get_media_type(extension):
     types = get_media_types()
     for type in types.keys():
         if extension in types[type]:
+            logger.debug(f"We got the {type} filetype.")
             return type
 
 
-def check_for_year(filename):
-    year = re.compile(r'(20\d{2}|19\d{2})')
+def get_year_released(basefile):
+    # K, this is a little tricky as the title might contain a year i.e. Wonder Woman 1984, 2012
+    # step 1: prefer years in brackets. -1 index will get last year in the list.
     try:
-        return re.findall(year, filename)[0].upper()
-    except:
-        return None
+        year_released = re.findall(r'\((20\d{2}|19\d{2})\)', basefile)[-1]
+    except IndexError:
+        year_released = re.findall(r'(20\d{2}|19\d{2})', basefile)[-1]
+    return year_released
 
 
 def move_article_to_end(filename):
@@ -211,7 +123,7 @@ def move_article_to_end(filename):
 
 def extract_files_if_folder(dir_path):
     allowed_ext = get_allowed_extensions()
-    files = [os.path.join(dir_path, item) for item in os.listdir(dir_path) if os.path.splitext(item)[1][1:] in allowed_ext]
+    files = [os.path.join(dir_path, item) for item in os.listdir(dir_path) if os.path.splitext(item)[1] in allowed_ext]
     dirs = [item[0] for item in os.walk(dir_path)]
     files = files + dirs
     files.remove(dir_path)
@@ -245,57 +157,6 @@ def exiftool_change(input_dict, filename):
         os.remove(original_path)
     else:
         logger.debug("Original file does not exist.")
-
-
-def get_artist_with_lastfm(settings, artist, **kwargs):
-    ai = pylast.LastFMNetwork(api_key=settings['lastfmkey'], api_secret=settings['lastfmsec'])
-    searched_artist = pylast.ArtistSearch(artist_name=artist, network=ai).get_next_page()[0]
-    logger.debug(f"Returning {searched_artist} as searched artist.")
-    return searched_artist
-
-
-def get_track_with_lastfm(settings:dict, artist, title:str, **kwargs):
-    if "optional_recursive_artist" in kwargs:
-        #     make switch to avoid recalling
-        logger.debug("Running second attempt at search music...")
-        artist = kwargs['optional_recursive_artist']
-    ai = pylast.LastFMNetwork(api_key=settings['lastfmkey'], api_secret=settings['lastfmsec'])
-    # check what kind of artist variable we're being passed.
-    if isinstance(artist, pylast.Artist):
-        artist_str = artist.get_name()
-        logger.debug("Using pylast Artist instance")
-    elif isinstance(artist, str):
-        logger.debug("Using string for artist name.")
-        artist_str = artist
-    else:
-        logger.error("Artist is not an acceptable class.")
-        raise TypeError
-    track = pylast.TrackSearch(artist_name=artist_str, track_title=title, network=ai).get_next_page()[0]
-    if isinstance(track, pylast.Track):
-        return_track = {}
-        logger.debug(f"We got this track: {track.__dict__}")
-        return_track['track_title'] = track.get_name()
-        logger.debug(f"We got {return_track['track_title']} as title.")
-        return_track['artist_name'] = move_article_to_end(track.get_artist().get_name())
-        logger.debug(f"We got {return_track['artist_name']} as artist.")
-        album = track.get_album()
-        if isinstance(album, pylast.Album):
-            return_track['album_name'] = album.get_name()
-            logger.debug(f"We got {return_track['album_name']} as album.")
-            return_track['track_title'], return_track['track_number'], return_track['track_total'] = get_album_info(
-                return_track['track_title'], album)
-            logger.debug(f"Using {return_track} as final track.")
-            return return_track
-        else:
-            logger.warning("Got no album , likely due to faulty artist search. Recursion attempt with article removal.")
-            if "optional_recursive_artist" not in kwargs:
-                new_artist = re.sub(re.compile(r"the |an |a ", re.IGNORECASE), "", artist_str)
-                return_track = get_track_with_lastfm(settings, artist, title, optional_recursive_artist=new_artist)
-                logger.debug(f"In the recursion we got {return_track['album_name']} as album.")
-                return return_track
-    else:
-        logger.error("Search was not successful, did not produce track.")
-        raise TypeError
 
 
 def get_album_info(track_title:str, album:pylast.Album):
@@ -333,7 +194,7 @@ def sanitize_file_name(raw:str):
 def remove_season_episode(raw:str):
     raw = re.sub(r'[\.|\s|-]?s(?:eason)?\d{1,2}', " ", raw, flags=re.I)
     raw = re.sub(r'[\.|\s|-]?e(?:pisode)?\d{1,2}', " ", raw, flags=re.I)
-    return raw
+    return raw.strip()
 
 def enforce_series_name(basefile:str):
     # First santize the file base name
@@ -360,24 +221,95 @@ def get_season_and_episode(basefile):
     return season, episode
 
 
-def get_episode_name(series_name:str, season_number:int, episode_number:int, tv_config:dict):
+def get_episode_name(series_name:str, season_number:int, episode_number:int, tv_config:dict={}):
     if "thetvdbkey" in tv_config:
         pass
     else:
         episode_name, airdate = wikipedia_tv_episode_search(series_name, season_number, episode_number)
+        logger.debug(f"Got episode name:{episode_name}, airdate: {airdate}.")
         return episode_name, airdate
 
 
 def check_movie_title(basefile:str):
     movie_title = sanitize_file_name(basefile)
-    year_of_release = check_for_year(movie_title)
+    year_of_release = get_year_released(movie_title)
     movie_title = movie_title.replace(year_of_release, "").strip()
     # Currently only wikipedia exists
     movie_title, year_of_release = check_movie_with_wikipedia(movie_title, year_of_release)
+    logger.debug(f"Got movie title: {movie_title}, year of release: {year_of_release}")
     return movie_title, year_of_release
 
 
 def get_movie_details(movie_title:str, release_year:str):
     # currently only wikipedia is supported
     director, starring =  wikipedia_movie_search(movie_title, release_year)
+    logger.debug(f"Got director: {director}, starring: {starring}")
     return director, starring
+
+
+def check_artist_name(basefile:str, song_config={}):
+    if "lastfmkey" in song_config and "lastfmsec" in song_config:
+        return check_artist_with_lastfm(basefile, song_config)
+    else:
+        return wikipedia_artist_search(basefile)
+
+
+def check_song_name(basefile:str, artist:str, song_config={}):
+    if "lastfmkey" in song_config and "lastfmsec" in song_config:
+        return check_song_name_with_lastfm(basefile, artist, song_config)
+    else:
+        return wikipedia_song_search(basefile, artist)
+
+
+def get_song_details(artist:str, song:str, song_config={}):
+    if "lastfmkey" in song_config and "lastfmsec" in song_config:
+        return lastfm_song_details(artist, song, song_config)
+    else:
+        return wikipedia_song_details(artist, song)
+
+
+def samba_move_file(source_file:str, destination_file:str, development:bool):
+    smb_config = get_config(section="smb")
+    path_list = destination_file.replace("\\", "").split("/")
+    server_address = path_list[2]
+    share = path_list[3]
+    folders = path_list[4:-1]
+    file_path = "/".join(path_list[4:])
+    logger.debug(f"File path {file_path}")
+    conn = SMBConnection(smb_config['smb_user'], smb_config['smb_pass'], "client", "host", use_ntlm_v2=True)
+    try:
+        conn.connect(server_address)
+    except Exception as e:
+        logger.error(f"SMB connection failed: {e}")
+    fullpath = ""
+    for folder in folders:
+        fullpath += f"/{folder}"
+        # Check if directory exists, if not, make it.
+        try:
+            conn.listPath(share, fullpath)
+        except OperationFailure:
+            conn.createDirectory(share, fullpath)
+    # Write the file.
+    with open(source_file, "rb") as f:
+        try:
+            if not development:
+                logger.debug("Writing file.")
+                resp = conn.storeFile(share, file_path, f)
+                logger.debug(f"SMB protocol returned {resp}")
+                move_trigger = True
+            else:
+                logger.debug("No moving on development environment.")
+        except Exception as e:
+            logger.error(f"Problem with writing file on smb: {e}")
+    conn.close()
+
+
+def normal_move_file(source_file:Path, destination_file:str, development:bool, move:bool=False):
+    if not development:
+        Path(destination_file).parent.mkdir(parents=True, exist_ok=True)
+        if move:
+            logger.debug("Move selected, moving file.")
+            shutil.move(source_file, destination_file)
+        else:
+            logger.debug("Copy selected, copying file.")
+            shutil.copy2(source_file, destination_file)

@@ -25,6 +25,15 @@ class StreamToLogger(object):
             self.logger.log(self.log_level, line.rstrip())
 
 
+def enforce_settings_booleans(settings):
+    # convert 'True'/'False' strings into actual booleans
+    for item in settings:
+        if settings[item] == "True":
+            settings[item] = True
+        elif settings[item] == "False":
+            settings[item] = False
+    return settings
+
 def get_cliarg():
     aParser = ArgumentParser()
     aParser.add_argument("filename", type=str, help="The file to be parsed.")
@@ -71,7 +80,7 @@ def get_config(settings_path:str="", section:str="settings"):
             sys.exit()
     logger.debug(f"Using {settings_path} for config file.")
     cParser.read(settings_path)
-    return {s:dict(cParser.items(s)) for s in cParser.sections()}[section]
+    return enforce_settings_booleans({s:dict(cParser.items(s)) for s in cParser.sections()}[section])
 
 
 def get_media_types():

@@ -82,6 +82,7 @@ class MediaObject(object):
             samba_move_file(self.filepath.__str__(), self.final_destination, self.development)
         else:
             normal_move_file(self.filepath.__str__(), self.final_destination, self.development, self.move)
+        update_libraries()
 
 
 

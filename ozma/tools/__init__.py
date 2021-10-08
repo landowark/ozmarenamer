@@ -9,12 +9,13 @@ import shutil
 import unicodedata
 import exiftool
 import pylast
-from .plex import get_all_series_names, enforce_series_with_plex
+from .plex import get_all_series_names, enforce_series_with_plex, update_plex_library
 from .wikipedia import *
 from .lastfm import *
 from smb.SMBConnection import SMBConnection
 from smb.smb_structs import OperationFailure
 from pathlib import Path
+from .IMDB import enforce_series_with_IMDB, IMDB_episode_search
 
 logger = logging.getLogger("ozma.tools")
 strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEBRip", "WEB", "EXTENDED", "DVDRip", "HC",
@@ -208,7 +209,11 @@ def enforce_series_name(basefile:str):
     if "plex_settings" in locals():
         return enforce_series_with_plex(series_name, plex_config)
     else:
-        return enforce_series_with_wikipedia(series_name)
+        try:
+            return enforce_series_with_IMDB(series_name)
+        except Exception as e:
+            logger.error(f"IMDB bugged out for enforcement: {e}")
+            return enforce_series_with_wikipedia(series_name)
 
 
 def get_season_and_episode(basefile):
@@ -225,7 +230,11 @@ def get_episode_name(series_name:str, season_number:int, episode_number:int, tv_
     if "thetvdbkey" in tv_config:
         pass
     else:
-        episode_name, airdate = wikipedia_tv_episode_search(series_name, season_number, episode_number)
+        try:
+            episode_name, airdate = IMDB_episode_search(series_name, season_number, episode_number)
+        except Exception as e:
+            logger.error(f"IMDB bugged out for episode name: {e}.")
+            episode_name, airdate = wikipedia_tv_episode_search(series_name, season_number, episode_number)
         logger.debug(f"Got episode name:{episode_name}, airdate: {airdate}.")
         return episode_name, airdate
 
@@ -291,6 +300,7 @@ def samba_move_file(source_file:str, destination_file:str, development:bool):
             conn.createDirectory(share, fullpath)
     # Write the file.
     with open(source_file, "rb") as f:
+        # logger.debug(share + file_path)
         try:
             if not development:
                 logger.debug("Writing file.")
@@ -298,7 +308,7 @@ def samba_move_file(source_file:str, destination_file:str, development:bool):
                 logger.debug(f"SMB protocol returned {resp}")
                 move_trigger = True
             else:
-                logger.debug("No moving on development environment.")
+                logger.warning("No moving on development environment.")
         except Exception as e:
             logger.error(f"Problem with writing file on smb: {e}")
     conn.close()
@@ -313,3 +323,15 @@ def normal_move_file(source_file:Path, destination_file:str, development:bool, m
         else:
             logger.debug("Copy selected, copying file.")
             shutil.copy2(source_file, destination_file)
+    else:
+        logger.warning("No moving on development environment.")
+
+
+def update_libraries():
+    # todo add KODI?
+    try:
+        plex_config = get_config(section="plex")
+    except KeyError:
+        logger.warning("Plex not found in settings")
+    if "plex_settings" in locals():
+        update_plex_library(plex_config)

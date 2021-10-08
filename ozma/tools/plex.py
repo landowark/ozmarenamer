@@ -21,3 +21,12 @@ def enforce_series_with_plex(series_name:str, plex_config:dict):
     else:
         logger.debug(f"Didn't  get a very good match for {series_name}, just using the original.")
         return series_name
+
+
+def update_plex_library(plex_config:dict):
+    try:
+        logger.debug("Updating Plex library.")
+        plex = PlexServer(plex_config['plex_url'], plex_config['plex_token'])
+        plex.library.update()
+    except Exception as e:
+        logger.error(e)

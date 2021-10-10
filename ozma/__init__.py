@@ -1,5 +1,6 @@
 from ozma.setup import setup_logger, get_config
 from ozma.classes.manager import MediaManager
+from ozma.tools import update_libraries
 
 
 logger = setup_logger()
@@ -12,3 +13,4 @@ def main(*args):
     manager = MediaManager(config=config)
     for file in manager.mediaobjs:
         file.move_file()
+    update_libraries()

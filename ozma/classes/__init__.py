@@ -3,6 +3,7 @@ from ozma.tools import *
 import sys, inspect
 import logging
 import jinja2
+from ozma.tools.muta import *
 
 
 logger = logging.getLogger(__name__)
@@ -30,6 +31,7 @@ class MediaObject(object):
         self.run_parse()
         self.render_schema()
         self.create_destination()
+        self.mutate_file()
         logger.debug(f"We're going to use this object: {self.__dict__}")
 
     def parse_media_type(self):
@@ -62,6 +64,9 @@ class MediaObject(object):
         logger.debug(f"This is the run parse of the parent class: {self.__class__.__name__}")
 
 
+    def mutate_file(self):
+        logger.debug(f"This is the mutate file of the parent class: {self.__class__.__name__}")
+
     def render_schema(self):
         schema = jinja2.Template(self.class_settings[f"{self.media_type}_schema"])
         self.final_filename = schema.render(self.__dict__)
@@ -82,7 +87,7 @@ class MediaObject(object):
             samba_move_file(self.filepath.__str__(), self.final_destination, self.development)
         else:
             normal_move_file(self.filepath.__str__(), self.final_destination, self.development, self.move)
-        update_libraries()
+        # update_libraries()
 
 
 
@@ -101,6 +106,9 @@ class TV(MediaObject):
         self.airdate = temp_airdate.strftime(self.settings['date_format'])
         self.series_name = move_article_to_end(self.series_name)
 
+    def mutate_file(self):
+        mutate_tv(self.__dict__)
+
 
 class Movie(MediaObject):
 
@@ -108,6 +116,9 @@ class Movie(MediaObject):
         self.movie_title, self.movie_release_year = check_movie_title(self.basefile)
         self.director, self.starring = get_movie_details(self.movie_title, self.movie_release_year)
         self.movie_title = move_article_to_end(self.movie_title)
+
+    def mutate_file(self):
+        mutate_movie(self.__dict__)
 
 
 class Song(MediaObject):
@@ -117,3 +128,6 @@ class Song(MediaObject):
         self.artist_name = move_article_to_end(check_artist_name(self.basefile))
         self.track_title = check_song_name(self.basefile, self.artist_name)
         self.album_name, self.track_number = get_song_details(self.artist_name, self.track_title, self.class_settings)
+
+    def mutate_file(self):
+        mutate_song(self.__dict__)

@@ -331,7 +331,7 @@ def update_libraries():
     # todo add KODI?
     try:
         plex_config = get_config(section="plex")
+        update_plex_library(plex_config)
     except KeyError:
         logger.warning("Plex not found in settings")
-    if "plex_settings" in locals():
-        update_plex_library(plex_config)
+

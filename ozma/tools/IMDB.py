@@ -47,3 +47,18 @@ def enforce_series_with_IMDB(series_name:str):
     else:
         logger.debug(f"Didn't  get a very good match for {series_name}, just using the original.")
         return series_name
+
+
+def check_movie_with_IMDB(movie_title:str, release_year:str=""):
+    movie = ia.search_movie(f"{movie_title} ({release_year})")[0]
+    movie_title = movie['title']
+    year_of_release = movie['year']
+    return movie_title, year_of_release
+
+
+def IMDB_movie_search(movie_title:str, release_year:str):
+    movie = ia.search_movie(f"{movie_title} ({release_year})")[0]
+    ia.update(movie)
+    director = movie['director'][0]['name']
+    starring = [item['name'] for item in movie['cast']][:5]
+    return director, starring

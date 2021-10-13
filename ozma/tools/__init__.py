@@ -15,7 +15,7 @@ from .lastfm import *
 from smb.SMBConnection import SMBConnection
 from smb.smb_structs import OperationFailure
 from pathlib import Path
-from .IMDB import enforce_series_with_IMDB, IMDB_episode_search
+from .IMDB import *
 
 logger = logging.getLogger("ozma.tools")
 strip_list = ["HDTV", "x264", "x265", "h264", "720p", "1080p", "PROPER", "WEBRip", "WEB", "EXTENDED", "DVDRip", "HC",
@@ -106,7 +106,11 @@ def get_year_released(basefile):
     try:
         year_released = re.findall(r'\((20\d{2}|19\d{2})\)', basefile)[-1]
     except IndexError:
-        year_released = re.findall(r'(20\d{2}|19\d{2})', basefile)[-1]
+        try:
+            year_released = re.findall(r'(20\d{2}|19\d{2})', basefile)[-1]
+        except IndexError:
+            logger.error("Couldn't find year of release.")
+            return ""
     return year_released
 
 
@@ -244,14 +248,22 @@ def check_movie_title(basefile:str):
     year_of_release = get_year_released(movie_title)
     movie_title = movie_title.replace(year_of_release, "").strip()
     # Currently only wikipedia exists
-    movie_title, year_of_release = check_movie_with_wikipedia(movie_title, year_of_release)
+    try:
+        movie_title, year_of_release = check_movie_with_IMDB(movie_title, year_of_release)
+    except Exception as e:
+        logger.error(f"IMDb crapped out with: {e}")
+        movie_title, year_of_release = check_movie_with_wikipedia(movie_title, year_of_release)
     logger.debug(f"Got movie title: {movie_title}, year of release: {year_of_release}")
     return movie_title, year_of_release
 
 
 def get_movie_details(movie_title:str, release_year:str):
     # currently only wikipedia is supported
-    director, starring =  wikipedia_movie_search(movie_title, release_year)
+    try:
+        director, starring = IMDB_movie_search(movie_title, release_year)
+    except Exception as e:
+        logger.error("IMDB crapped out on movie search")
+        director, starring =  wikipedia_movie_search(movie_title, release_year)
     logger.debug(f"Got director: {director}, starring: {starring}")
     return director, starring
 

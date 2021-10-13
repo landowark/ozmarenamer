@@ -13,7 +13,7 @@ def mutate_song(media_info:dict):
         mut_file = EasyMP4(media_info['filepath'].__str__())
     elif media_info['filepath'].suffix in opus_list:
         mut_file = OggOpus(media_info['filepath'].__str__())
-    mut_file['TRACKNUMBER'] = media_info['track_number']
+    mut_file['TRACKNUMBER'] = str(media_info['track_number'])
     mut_file['TITLE'] = media_info['track_title']
     mut_file['ALBUM'] = media_info['album_name']
     mut_file['ARTIST'] = media_info['artist_name']

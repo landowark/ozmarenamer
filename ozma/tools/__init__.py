@@ -276,6 +276,7 @@ def check_artist_name(basefile:str, song_config={}):
 
 
 def check_song_name(basefile:str, artist:str, song_config={}):
+    logger.debug(f"Hello from {__name__}")
     if "lastfmkey" in song_config and "lastfmsec" in song_config:
         logger.debug("Using lastfm for checking song name.")
         return check_song_name_with_lastfm(basefile, artist, song_config)

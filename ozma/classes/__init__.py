@@ -127,7 +127,7 @@ class Song(MediaObject):
         # del self.class_settings['lastfmkey'], self.class_settings['lastfmsec']
         logger.debug(self.class_settings)
         self.artist_name = move_article_to_end(check_artist_name(self.basefile))
-        self.track_title = check_song_name(self.basefile, self.artist_name)
+        self.track_title = check_song_name(self.basefile, self.artist_name, song_config=self.class_settings)
         self.album_name, self.track_number = get_song_details(self.artist_name, self.track_title, self.class_settings)
 
     def mutate_file(self):

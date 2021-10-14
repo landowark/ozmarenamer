@@ -277,15 +277,19 @@ def check_artist_name(basefile:str, song_config={}):
 
 def check_song_name(basefile:str, artist:str, song_config={}):
     if "lastfmkey" in song_config and "lastfmsec" in song_config:
+        logger.debug("Using lastfm for checking song name.")
         return check_song_name_with_lastfm(basefile, artist, song_config)
     else:
+        logger.debug("Gonna use wikipedia for checking song name.")
         return wikipedia_song_search(basefile, artist)
 
 
 def get_song_details(artist:str, song:str, song_config={}):
     if "lastfmkey" in song_config and "lastfmsec" in song_config:
+        logger.debug("Using lastfm for song details.")
         return lastfm_song_details(artist, song, song_config)
     else:
+        logger.debug("Using wikipedia for song details.")
         return wikipedia_song_details(artist, song)
 
 

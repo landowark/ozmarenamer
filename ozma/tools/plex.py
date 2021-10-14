@@ -2,7 +2,7 @@ from plexapi.server import PlexServer
 import logging
 from fuzzywuzzy import process
 
-logger = logging.getLogger("ozma.plex_randomizer")
+logger = logging.getLogger("ozma.plex")
 
 
 def get_all_series_names(plex_url:str, plex_token:str) -> list:

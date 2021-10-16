@@ -111,6 +111,7 @@ def get_year_released(basefile):
         except IndexError:
             logger.error("Couldn't find year of release.")
             return ""
+    logger.debug(f"Returning year released: {year_released}")
     return year_released
 
 
@@ -246,7 +247,9 @@ def get_episode_name(series_name:str, season_number:int, episode_number:int, tv_
 def check_movie_title(basefile:str):
     movie_title = sanitize_file_name(basefile)
     year_of_release = get_year_released(movie_title)
-    movie_title = movie_title.replace(year_of_release, "").strip()
+    movie_title = re.sub(rf'\(?{year_of_release}\)?', "", movie_title)
+    logger.debug(f"Using movie title: {movie_title}")
+    # movie_title = movie_title.replace(year_of_release, "").strip()
     # Currently only wikipedia exists
     try:
         movie_title, year_of_release = check_movie_with_IMDB(movie_title, year_of_release)

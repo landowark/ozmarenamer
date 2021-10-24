@@ -80,6 +80,7 @@ class MediaObject(object):
         final_destination = schema.render(self.__dict__)
         # self.final_destination = PurePath(final_destination, self.final_filename).__str__()
         self.final_destination = final_destination + self.final_filename
+        self.final_destination = self.final_destination.replace(":", "")
 
     def move_file(self):
         if self.final_destination[:3] == "smb":

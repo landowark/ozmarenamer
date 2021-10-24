@@ -197,6 +197,7 @@ def sanitize_file_name(raw:str):
     logger.debug(f"Returning sanitized filename: {raw}")
     return raw
 
+
 def remove_season_episode(raw:str):
     raw = re.sub(r'[\.|\s|-]?s(?:eason)?\d{1,2}', " ", raw, flags=re.I)
     raw = re.sub(r'[\.|\s|-]?e(?:pisode)?\d{1,2}', " ", raw, flags=re.I)

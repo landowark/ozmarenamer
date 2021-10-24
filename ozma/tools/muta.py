@@ -26,6 +26,8 @@ def mutate_song(media_info:dict):
 def mutate_tv(media_info:dict):
     if media_info['filepath'].suffix in mp4_list:
         mut_file = EasyMP4(media_info['filepath'].__str__())
+    else:
+        return
     template = jinja2.Template("{{ series_name }} S{{ '%02d' % season_number }}E{{ '%02d' % episode_number }} - {{ episode_name }}")
     mut_file['TITLE'] = template.render(media_info)
     logger.debug("Mutating tv episode.")

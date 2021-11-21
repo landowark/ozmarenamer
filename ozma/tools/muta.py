@@ -20,7 +20,10 @@ def mutate_song(media_info:dict):
     mut_file['ALBUM'] = media_info['album_name']
     mut_file['ARTIST'] = media_info['artist_name']
     logger.debug("Mutating song.")
-    mut_file.save(media_info['filepath'].__str__())
+    try:
+        mut_file.save(media_info['filepath'].__str__())
+    except Exception as e:
+        logger.error(f"Couldn't mutate file: {e}")
 
 
 def mutate_tv(media_info:dict):
@@ -31,7 +34,10 @@ def mutate_tv(media_info:dict):
     template = jinja2.Template("{{ series_name }} S{{ '%02d' % season_number }}E{{ '%02d' % episode_number }} - {{ episode_name }}")
     mut_file['TITLE'] = template.render(media_info)
     logger.debug("Mutating tv episode.")
-    mut_file.save(media_info['filepath'].__str__())
+    try:
+        mut_file.save(media_info['filepath'].__str__())
+    except Exception as e:
+        logger.error(f"Couldn't mutate file: {e}")
 
 
 def mutate_movie(media_info:dict):
@@ -40,4 +46,7 @@ def mutate_movie(media_info:dict):
     template = jinja2.Template("{{ movie_title }} - ({{ movie_release_year }})")
     mut_file['TITLE'] = template.render(media_info)
     logger.debug("Mutating movie.")
-    mut_file.save(media_info['filepath'].__str__())
+    try:
+        mut_file.save(media_info['filepath'].__str__())
+    except Exception as e:
+        logger.error(f"Couldn't mutate file: {e}")

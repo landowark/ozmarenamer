@@ -40,6 +40,7 @@ def mutate_tv(media_info:dict):
         logger.error(f"Couldn't mutate file: {e}")
 
 
+
 def mutate_movie(media_info:dict):
     if media_info['filepath'].suffix in mp4_list:
         mut_file = EasyMP4(media_info['filepath'].__str__())

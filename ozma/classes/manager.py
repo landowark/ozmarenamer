@@ -19,6 +19,7 @@ class MediaManager(object):
             file_list = extract_files_if_folder(dir_path=filepath)
             if file_list != []:
                 logger.debug("Look out, it's recursion time!")
+                # todo I've a bug. The first run through uses the specified config file, but the recursion falls back to
                 for file in file_list:
                     self.load_files(filepath=file)
             else:

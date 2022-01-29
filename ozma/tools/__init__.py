@@ -70,7 +70,7 @@ def get_season_episode_dxdd(filename):
         both = both[0].split('x')
         season = both[0]
         episode = both[1]
-        return season, episode
+        return int(season), int(episode)
     except:
         return None, None
 
@@ -201,6 +201,7 @@ def sanitize_file_name(raw:str):
 def remove_season_episode(raw:str):
     raw = re.sub(r'[\.|\s|-]?s(?:eason)?\d{1,2}', " ", raw, flags=re.I)
     raw = re.sub(r'[\.|\s|-]?e(?:pisode)?\d{1,2}', " ", raw, flags=re.I)
+    raw = re.sub(r'\d{1,2}x\d{1,2}.*', " ", raw, flags=re.I)
     return raw.strip()
 
 def enforce_series_name(basefile:str):
@@ -222,16 +223,17 @@ def enforce_series_name(basefile:str):
             return enforce_series_with_wikipedia(series_name)
 
 
+
 def get_season_and_episode(basefile):
     season = get_season(basefile)
     episode = get_episode(basefile)
-    logger.debug(f"We got season {season} & episode {episode}.")
     if season == None:
         logger.debug(f"Checking season with dxdd")
         season, _ = get_season_episode_dxdd(basefile)
     if episode == None:
         logger.debug(f"Checking episode with dxdd")
         _, episode = get_season_episode_dxdd(basefile)
+    logger.debug(f"We got season {season} & episode {episode}.")
     return season, episode
 
 

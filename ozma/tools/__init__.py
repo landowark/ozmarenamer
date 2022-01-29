@@ -225,9 +225,12 @@ def enforce_series_name(basefile:str):
 def get_season_and_episode(basefile):
     season = get_season(basefile)
     episode = get_episode(basefile)
+    logger.debug(f"We got season {season} & episode {episode}.")
     if season == None:
+        logger.debug(f"Checking season with dxdd")
         season, _ = get_season_episode_dxdd(basefile)
     if episode == None:
+        logger.debug(f"Checking episode with dxdd")
         _, episode = get_season_episode_dxdd(basefile)
     return season, episode
 

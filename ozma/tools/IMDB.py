@@ -30,7 +30,7 @@ def IMDB_episode_search(series_name:str, season_number, episode_number):
 
 
 def enforce_series_with_IMDB(series_name:str):
-    logger.debug("Enforcing series with IMDB")
+    logger.debug(f"Enforcing {series_name} series with IMDB")
     potentials = ia.search_movie(series_name)[:2]
     names = [item['long imdb title'] for item in potentials]
     dicto = {}

@@ -21,6 +21,10 @@ class MediaObject(object):
             self.move = self.settings['move']
         else:
             self.move = False
+        if 'mutate' in self.settings:
+            self.mutate = True
+        else:
+            self.mutate = False
         if not self.filepath.exists():
             raise FileNotFoundError("File provided does not actually exist!")
         self.basefile = self.filepath.stem
@@ -108,7 +112,10 @@ class TV(MediaObject):
         self.series_name = move_article_to_end(self.series_name)
 
     def mutate_file(self):
-        mutate_tv(self.__dict__)
+        if self.mutate:
+            mutate_tv(self.__dict__)
+        else:
+            logger.debug("Not mutating file.")
 
 
 class Movie(MediaObject):
@@ -119,7 +126,10 @@ class Movie(MediaObject):
         self.movie_title = move_article_to_end(self.movie_title)
 
     def mutate_file(self):
-        mutate_movie(self.__dict__)
+        if self.mutate:
+            mutate_movie(self.__dict__)
+        else:
+            logger.debug("Not mutating file.")
 
 
 class Song(MediaObject):
@@ -130,4 +140,7 @@ class Song(MediaObject):
         self.album_name, self.track_number = get_song_details(self.artist_name, self.track_title, self.class_settings)
 
     def mutate_file(self):
-        mutate_song(self.__dict__)
+        if self.mutate:
+            mutate_song(self.__dict__)
+        else:
+            logger.debug("Not mutating file.")

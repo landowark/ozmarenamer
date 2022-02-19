@@ -326,12 +326,15 @@ def samba_move_file(source_file:str, destination_file:str, development:bool):
         logger.error(f"SMB connection failed: {e}")
     fullpath = ""
     for folder in folders:
-        fullpath += f"/{folder}"
-        # Check if directory exists, if not, make it.
-        try:
-            conn.listPath(share, fullpath)
-        except OperationFailure:
-            conn.createDirectory(share, fullpath)
+        if not development:
+            fullpath += f"/{folder}"
+            # Check if directory exists, if not, make it.
+            try:
+                conn.listPath(share, fullpath)
+            except OperationFailure:
+                conn.createDirectory(share, fullpath)
+        else:
+            logger.warning("No folder creation on development environment.")
     # Write the file.
     with open(source_file, "rb") as f:
         # logger.debug(share + file_path)

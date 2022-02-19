@@ -147,6 +147,13 @@ def escape_specials(input:str) -> str:
         input = input.replace(special, f"\\{special}")
     return input
 
+def replace_forward_slash_in_title(input:str) -> str:
+#     step one: get index of forward slash
+    start_idx = input.index("/")
+    end_idx = input.find(" ", start_idx)
+    return f"{input[:start_idx]}({input[start_idx+1:end_idx]}){input[end_idx:]}"
+
+
 
 def remove_accents(input_str):
     nfkd_form = unicodedata.normalize('NFKD', input_str)
@@ -246,6 +253,7 @@ def get_episode_name(series_name:str, season_number:int, episode_number:int, tv_
         except Exception as e:
             logger.error(f"IMDB bugged out for episode name: {e}.")
             episode_name, airdate = wikipedia_tv_episode_search(series_name, season_number, episode_number)
+        episode_name = escape_specials(replace_forward_slash_in_title(episode_name))
         logger.debug(f"Got episode name:{episode_name}, airdate: {airdate}.")
         return episode_name, airdate
 

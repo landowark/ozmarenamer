@@ -13,6 +13,5 @@ The config.ini file should look like this:
 tv_schema = /home/user/tv/{series_name}/{series_name} Season{season_number}/{series_name}.S{season_number}E{episode_number}.{episode_name}.{extension}
 movie_schema = /home/user/movies/{movie_name} ({year_of_release})/{movie_name} ({year_of_release}).{extension}
 book_schema = /home/user/books/{author}/{series_name}/{book_title} ({year_of_release}){extension}
-thetvdbkey = 754F7A3F73B01774
 main_language = en
 ```

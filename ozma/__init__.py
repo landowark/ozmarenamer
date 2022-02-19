@@ -12,5 +12,6 @@ def main(*args):
     logger.debug(f"Running main with parameters: {config}")
     manager = MediaManager(config=config)
     for file in manager.mediaobjs:
+        logger.debug(manager.settings)
         file.move_file()
     update_libraries()

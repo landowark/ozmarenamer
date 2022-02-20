@@ -9,6 +9,7 @@ class MediaManager(object):
 
     def __init__(self, config:dict):
         self.settings = config
+        logger.debug(f"Here are the MediaManager settings: {self.__dict__}")
         # Where the origin file is
         self.mediaobjs = []
         self.load_files(config['filename'])
@@ -25,5 +26,5 @@ class MediaManager(object):
             else:
                 logger.error(f"There are no appropriate files in {filepath}")
         else:
-            new_medObj = MediaObject(filepath=filepath)
+            new_medObj = MediaObject(filepath=filepath, config=self.settings)
             self.mediaobjs.append(new_medObj)

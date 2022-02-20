@@ -10,8 +10,12 @@ logger = logging.getLogger(__name__)
 
 class MediaObject(object):
 
-    def __init__(self, filepath):
-        self.settings = get_config()
+    def __init__(self, filepath, config: dict={}):
+        # self.settings = get_config()
+        if config == {}:
+            self.settings = get_config()
+        else:
+            self.settings = config
         self.filepath = Path(filepath)
         if 'development' in self.settings:
             self.development = self.settings['development']
@@ -72,6 +76,8 @@ class MediaObject(object):
         logger.debug(f"This is the mutate file of the parent class: {self.__class__.__name__}")
 
     def render_schema(self):
+        if "override_dest" in self.settings.keys():
+            self.class_settings = get_basefile_schema(self.class_settings)
         schema = jinja2.Template(self.class_settings[f"{self.media_type}_schema"])
         self.final_filename = schema.render(self.__dict__)
 

@@ -40,7 +40,7 @@ def get_cliarg():
     aParser.add_argument("-v", "--verbose", help="Verbose mode on", action="store_true")
     aParser.add_argument("-c", "--config", type=str, help="Path to the config.ini file.", default="")
     aParser.add_argument("-d", "--destination_dir", type=str, help="Destination path.")
-    aParser.add_argument("-m", "--move", help="Move file instead of copy.", default=False)
+    aParser.add_argument("-m", "--move", help="Move file instead of copy.", action="store_true")
     args = aParser.parse_args().__dict__
     if args['destination_dir'] == None:
         logger.debug("No destination directory given, deleting entry.")
@@ -49,6 +49,8 @@ def get_cliarg():
     if args['verbose']:
         handler = [item for item in logger.parent.handlers if item.name == "Stream"][0]
         handler.setLevel(logging.DEBUG)
+    if not args['move']:
+        args['move'] = False
     return args
 
 

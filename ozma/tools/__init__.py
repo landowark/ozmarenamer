@@ -352,6 +352,7 @@ def samba_move_file(source_file:str, destination_file:str, development:bool):
 
 
 def normal_move_file(source_file:Path, destination_file:str, development:bool, move:bool=False):
+    destination_file = destination_file.replace("\\", "")
     if not development:
         Path(destination_file).parent.mkdir(parents=True, exist_ok=True)
         if move:
@@ -371,4 +372,13 @@ def update_libraries():
         update_plex_library(plex_config)
     except KeyError:
         logger.warning("Plex not found in settings")
+
+
+def get_basefile_schema(config):
+    logger.debug("Overriding destination folder.")
+    schema_item = {key:value for key, value in config.items() if 'schema' in key.lower()}
+    for item in schema_item.keys():
+        path = Path(schema_item[item]).name
+        config[item] = path
+    return config
 

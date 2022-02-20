@@ -7,7 +7,7 @@ import getpass
 
 logger = logging.getLogger("ozma.cli")
 
-logger.debug(f"Command line called by {getpass.getuser()}.")
 params = get_cliarg()
+logger.debug(f"Command line called by {getpass.getuser()}.")
 logger.debug(f"Command line parameters: {params}")
 ozma.main(params)

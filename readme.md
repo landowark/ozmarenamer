@@ -1,5 +1,13 @@
 <h1>Ozma File Renamer</h1>
 
+Ozma File Renamer is a group of python scripts designed to rename your media files based on input from IMDB for movies and TV series and Lastfm for music.
+
+<h2>Installation</h2>
+
+Currently Ozma installation is handled through git only.
+
+``````
+
 <h2>Settings File</h2>
 Ozma will look for a file called "config.ini" in three places, taking the first one it finds:
 1. The user's .config/ozma directory (/home/<user>/.config/ozma)

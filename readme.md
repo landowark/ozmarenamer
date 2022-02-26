@@ -1,5 +1,7 @@
 <h1>Ozma File Renamer</h1>
 
+(This project is currently a personal hobby)
+
 Ozma File Renamer is a commandline utility designed to rename your media files based on input from IMDB for movies and TV series and Lastfm for music.
 Ozma supports local file movement as well as smb network file transfers.
 

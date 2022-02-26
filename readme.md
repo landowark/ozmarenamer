@@ -62,7 +62,7 @@ tv_destination = /home/{user}/tv/
 tv_schema = {{ series_name }}/{{ series_name }} Season{{ '%02d' % season_number }}/{{ series_name }}.S{{ '%02d' % season_number }}E{{ '%02d' % episode_number }}.{{ episode_name }}{{ extension }}
 ```
 
-...Will move an episode of Futurama to /home/{user}//tv/Futurama/Futurama Season02/Futurama.S02E18.The Problem with Popplers.m4v
+...Will move an episode of Futurama to /home/{user}/tv/Futurama/Futurama Season02/Futurama.S02E18.The Problem with Popplers.m4v
 
 <h3>Command Line</h3>
 

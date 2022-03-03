@@ -149,9 +149,12 @@ def escape_specials(input:str) -> str:
 
 def replace_forward_slash_in_title(input:str) -> str:
 #     step one: get index of forward slash
-    start_idx = input.index("/")
-    end_idx = input.find(" ", start_idx)
-    return f"{input[:start_idx]}({input[start_idx+1:end_idx]}){input[end_idx:]}"
+    if "/" in input:
+        start_idx = input.index("/")
+        end_idx = input.find(" ", start_idx)
+        return f"{input[:start_idx]}({input[start_idx+1:end_idx]}){input[end_idx:]}"
+    else:
+        return input
 
 
 

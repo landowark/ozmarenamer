@@ -16,7 +16,7 @@ class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
         os.chmod(self.baseFilename, currMode | stat.S_IWGRP)
 
 
-class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
+# class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
     def _open(self):
         prevumask=os.umask(0o002)
         #os.fdopen(os.open('/path/to/file', os.O_WRONLY, 0600))

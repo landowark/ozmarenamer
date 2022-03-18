@@ -51,19 +51,22 @@ def enforce_series_with_IMDB(series_name:str):
 
 def check_movie_with_IMDB(movie_title:str, release_year:str=""):
     # movie = ia.search_movie(f"{movie_title} ({release_year})")[0]
-    candidates = ia.search_movie(f"{movie_title}")
-    try:
-        movie = [item for item in candidates if 'year' in item.keys() and item['year']==int(release_year)][0]
-    except IndexError as e:
-        logger.error("Couldn't find movie with that title and release.")
-        movie = candidates[0]
+    movie = get_movie_from_IMDb_search(movie_title, release_year)
     movie_title = movie['title']
     year_of_release = movie['year']
     return movie_title, year_of_release
 
+def get_movie_from_IMDb_search(movie_title:str, release_year:str):
+    candidates = [movie for movie in ia.search_movie(f"{movie_title}") if movie.data['kind'] == "movie"]
+    try:
+        movie = [item for item in candidates if 'year' in item.keys() and item['year'] == int(release_year)][0]
+    except IndexError as e:
+        logger.error("Couldn't find movie with that title and release.")
+        movie = candidates[0]
+    return movie
 
 def IMDB_movie_search(movie_title:str, release_year:str):
-    movie = ia.search_movie(f"{movie_title} ({release_year})")[0]
+    movie = get_movie_from_IMDb_search(movie_title, release_year)
     ia.update(movie)
     director = movie['director'][0]['name']
     starring = [item['name'] for item in movie['cast']][:5]

@@ -58,6 +58,7 @@ def check_movie_with_IMDB(movie_title:str, release_year:str=""):
 
 def get_movie_from_IMDb_search(movie_title:str, release_year:str):
     candidates = [movie for movie in ia.search_movie(f"{movie_title}") if movie.data['kind'] == "movie"]
+    candidates = [movie for movie in candidates if "Podcast Episode" not in movie.data['title']]
     try:
         movie = [item for item in candidates if 'year' in item.keys() and item['year'] == int(release_year)][0]
     except IndexError as e:

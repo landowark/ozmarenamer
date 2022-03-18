@@ -278,12 +278,11 @@ def check_movie_title(basefile:str):
 
 
 def get_movie_details(movie_title:str, release_year:str):
-    # currently only wikipedia is supported
     try:
         director, starring = IMDB_movie_search(movie_title, release_year)
     except Exception as e:
         logger.error("IMDB crapped out on movie search")
-        director, starring =  wikipedia_movie_search(movie_title, release_year)
+        director, starring = wikipedia_movie_search(movie_title, release_year)
     logger.debug(f"Got director: {director}, starring: {starring}")
     return director, starring
 

@@ -63,6 +63,7 @@ def get_movie_from_IMDb_search(movie_title:str, release_year:str):
     except IndexError as e:
         logger.error("Couldn't find movie with that title and release.")
         movie = candidates[0]
+    logger.debug(f"Using movie object: {movie.__dict__}")
     return movie
 
 def IMDB_movie_search(movie_title:str, release_year:str):

@@ -41,6 +41,7 @@ def get_cliarg():
     aParser.add_argument("-c", "--config", type=str, help="Path to the config.ini file.", default="")
     aParser.add_argument("-d", "--destination_dir", type=str, help="Destination path.")
     aParser.add_argument("-m", "--move", help="Move file instead of copy.", action="store_true")
+    aParser.add_argument("-s", "--schema", help="Schema for the file structure")
     args = aParser.parse_args().__dict__
     if args['destination_dir'] == None:
         logger.debug("No destination directory given, deleting entry.")

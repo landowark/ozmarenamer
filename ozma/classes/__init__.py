@@ -78,6 +78,10 @@ class MediaObject(object):
     def render_schema(self):
         if "override_dest" in self.settings.keys():
             self.class_settings = get_basefile_schema(self.class_settings)
+        if "schema" in self.settings.keys():
+            if self.settings['schema'] != None:
+                logger.debug(f"We have an attempt at overriding schema: {self.settings['schema']}")
+                self.class_settings[f"{self.media_type}_schema"] = self.settings['schema']
         schema = jinja2.Template(self.class_settings[f"{self.media_type}_schema"])
         self.final_filename = schema.render(self.__dict__)
 

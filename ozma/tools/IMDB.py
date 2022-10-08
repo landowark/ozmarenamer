@@ -21,8 +21,14 @@ def IMDB_episode_search(series_name:str, season_number, episode_number):
         season_number = int(season_number)
     if isinstance(episode_number, str):
         episode_number = int(episode_number)
-    series = ia.search_movie(series_name)[0]
-    ia.update(series, "episodes")
+    try:
+        series = ia.search_movie(series_name)[0]
+    except Exception as e:
+        logger.error(f"There was a problem searching series: {e}")
+    try:
+        ia.update(series, "episodes")
+    except Exception as e:
+        logger.error(f"There was a problem updating series info: {e}")
     episode = series.data['episodes'][season_number][episode_number]
     episode_name = episode.data['title']
     try:

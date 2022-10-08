@@ -209,9 +209,9 @@ def sanitize_file_name(raw:str):
 
 
 def remove_season_episode(raw:str):
-    raw = re.sub(r'[\.|\s|-]?s(?:eason)?\d{1,2}', " ", raw, flags=re.I)
-    raw = re.sub(r'[\.|\s|-]?e(?:pisode)?\d{1,2}', " ", raw, flags=re.I)
-    raw = re.sub(r'\d{1,2}x\d{1,2}.*', " ", raw, flags=re.I)
+    raw = re.sub(r'[\.|\s|-]?s(?:eason)?\d{1,2}.+', " ", raw, flags=re.I)
+    raw = re.sub(r'[\.|\s|-]?e(?:pisode)?\d{1,2}.+', " ", raw, flags=re.I)
+    raw = re.sub(r'\d{1,2}x\d{1,2}.+', " ", raw, flags=re.I)
     return raw.strip()
 
 def enforce_series_name(basefile:str):

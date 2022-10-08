@@ -204,6 +204,8 @@ def sanitize_file_name(raw:str):
     for item in strip_list:
         raw = re.sub(rf"[\.|\s|-]?{item}[\.|\s|-]", " ", raw, flags=re.I)
     raw = raw.strip().split(" ")[0].replace(".", " ")
+    # Have to replace &, presumably because the http request doesn't like them
+    raw = raw.replace("&", "and")
     logger.debug(f"Returning sanitized filename: {raw}")
     return raw
 

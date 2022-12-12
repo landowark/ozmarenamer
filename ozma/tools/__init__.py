@@ -316,7 +316,7 @@ def get_song_details(artist:str, song:str, song_config={}):
 
 def samba_move_file(source_file:str, destination_file:str, development:bool):
     smb_config = get_config(section="smb")
-    path_list = destination_file.replace("\\", "").split("/")
+    path_list = destination_file.replace("\\", "").replace("?", "").split("/")
     server_address = path_list[2]
     share = path_list[3]
     folders = path_list[4:-1]

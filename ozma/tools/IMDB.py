@@ -1,4 +1,4 @@
-from imdb import IMDb
+from imdb import Cinemagoer as IMDb
 import logging
 from fuzzywuzzy import process
 from datetime import datetime

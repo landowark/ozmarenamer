@@ -11,7 +11,7 @@ def main(*args):
     config.update(args[0])
     if "destination_dir" in args[0].keys():
         # Okay, if a destination dir is given in cli args, just use the basefile in schema
-        logger.debug("Got destination dir in cli arguments.")
+        logger.debug("Got destination dir in cli arguments  .")
         config['override_dest'] = True
     manager = MediaManager(config=config)
     logger.debug(f"Running main with parameters: {config}")

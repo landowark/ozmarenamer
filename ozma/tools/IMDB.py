@@ -25,7 +25,11 @@ def IMDB_episode_search(series_name:str, season_number, episode_number):
     ia.update(series, "episodes")
     episode = series.data['episodes'][season_number][episode_number]
     episode_name = episode.data['title']
-    airdate = datetime.strptime(episode.data['original air date'], "%d %b. %Y").date()
+    try:
+        airdate = datetime.strptime(episode.data['original air date'], "%d %b. %Y").date()
+    except ValueError:
+        # Deal with May as a month.
+        airdate = datetime.strptime(episode.data['original air date'], "%d %b %Y").date()
     return episode_name, airdate
 
 

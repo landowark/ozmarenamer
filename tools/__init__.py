@@ -293,8 +293,10 @@ def get_movie_details(movie_title:str, release_year:str):
     try:
         director, starring = IMDB_movie_search(movie_title, release_year)
     except Exception as e:
-        logger.error("IMDB crapped out on movie search")
+        logger.error(f"IMDB crapped out on movie search: {e}")
         # director, starring =  wikipedia_movie_search(movie_title, release_year)
+        director = None
+        starring = None
     logger.debug(f"Got director: {director}, starring: {starring}")
     return director, starring
 

@@ -8,9 +8,9 @@ from classes.manager import MediaManager
 from classes.watchers import Handler
 from watchdog.observers import Observer
 
-setup_logger()
+logger = setup_logger()
 
-logger = logging.getLogger("ozma")
+# logger = logging.getLogger("ozma")
 
 
 @click.group("cli")

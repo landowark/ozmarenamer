@@ -3,7 +3,7 @@ import yaml
 from pathlib import Path
 from logging import handlers
 
-logger = logging.getLogger("ozma.configure")
+logger = logging.getLogger(f"ozma.{__name__}")
 
 package_dir = Path(__file__).parents[3].resolve()
 logger.debug(f"Package dir: {package_dir}")

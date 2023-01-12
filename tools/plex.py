@@ -1,0 +1,34 @@
+from plexapi.server import PlexServer
+import logging
+from fuzzywuzzy import process
+
+logger = logging.getLogger("ozma.plex")
+
+
+def get_all_series_names(plex_url:str, plex_token:str, plex_tv_section: str = "TV") -> list:
+    plex = PlexServer(plex_url, plex_token)
+    tv = plex.library.section(plex_tv_section)
+    results = [series.title for series in tv.searchShows()]
+    logger.debug(f"Results: {results}")
+    return results
+
+
+def enforce_series_with_plex(series_name:str, plex_config:dict):
+    plex_series = get_all_series_names(plex_config['plex_url'],
+                                       plex_config['plex_token'],
+                                       plex_tv_section=plex_config['tv_section'])
+    best_match = process.extract(series_name, plex_series)[0]
+    if best_match[1] > 90:
+        return best_match[0]
+    else:
+        logger.debug(f"Didn't  get a very good match for {series_name}, just using the original.")
+        return series_name
+
+
+def update_plex_library(plex_config:dict):
+    try:
+        logger.debug("Updating Plex library.")
+        plex = PlexServer(plex_config['plex_url'], plex_config['plex_token'])
+        plex.library.update()
+    except Exception as e:
+        logger.error(e)

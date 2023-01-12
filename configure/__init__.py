@@ -18,8 +18,11 @@ else:
 
 main_aux_dir = Path.home().joinpath(os_config_dir, "ozma")
 
-CONFIGDIR = main_aux_dir.joinpath("config")
+CONFIGDIR = main_aux_dir
 LOGDIR = main_aux_dir.joinpath("logs")
+
+if not LOGDIR.exists():
+    LOGDIR.mkdir(parents=True)
 
 print(f"Using {CONFIGDIR} as config directory")
 

@@ -28,6 +28,7 @@ def cli(ctx, config: str, verbose):
     Returns:
         args: all configuration arguments.
     """
+    print(f"Verbosity set to : {verbose}")
     if verbose:
         set_logger_verbosity(verbosity=verbose)
     # logger.debug(get_config(settings_path=config))

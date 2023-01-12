@@ -21,6 +21,8 @@ main_aux_dir = Path.home().joinpath(os_config_dir, "ozma")
 CONFIGDIR = main_aux_dir.joinpath("config")
 LOGDIR = main_aux_dir.joinpath("logs")
 
+print(f"Using {CONFIGDIR} as config directory")
+
 
 class GroupWriteRotatingFileHandler(handlers.RotatingFileHandler):
 

@@ -81,6 +81,7 @@ def get_config(settings_path: str = ""):
         #     settings_path = Path.joinpath(CONFIGDIR, "config.yml")
         logger.debug(f"Checking {CONFIGDIR} for config file.")
         if CONFIGDIR.joinpath("config.yml").exists():
+            logger.debug(f"config.yml found in {CONFIGDIR}")
             settings_path = CONFIGDIR.joinpath("config.yml")
         # Check user .ozma directory
         elif Path.home().joinpath(".ozma", "config.yml").exists():

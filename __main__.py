@@ -31,6 +31,7 @@ def cli(ctx, config: str, verbose):
     if verbose:
         set_logger_verbosity(verbosity=verbose)
     # logger.debug(get_config(settings_path=config))
+        print(f"Logging level set to: {logger.getEffectiveLevel()}")
     ctx.obj = {**get_config(settings_path=config), **ctx.__dict__['params']}
 
 

@@ -16,7 +16,7 @@ else:
     logger.debug(f"Got platform other, config_dir: {os_config_dir}")
 
 
-main_aux_dir = Path.home().joinpath(f"{os_config_dir}/ozma")
+main_aux_dir = Path.home().joinpath(os_config_dir, "ozma")
 
 CONFIGDIR = main_aux_dir.joinpath("config")
 LOGDIR = main_aux_dir.joinpath("logs")
@@ -79,6 +79,7 @@ def get_config(settings_path: str = ""):
         # Check user .config/ozma directory
         # if Path.exists(Path.joinpath(CONFIGDIR, "config.yml")):
         #     settings_path = Path.joinpath(CONFIGDIR, "config.yml")
+        logger.debug(f"Checking {CONFIGDIR} for config file.")
         if CONFIGDIR.joinpath("config.yml").exists():
             settings_path = CONFIGDIR.joinpath("config.yml")
         # Check user .ozma directory

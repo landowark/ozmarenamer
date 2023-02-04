@@ -2,6 +2,7 @@ from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 from tools import extensions
 from classes.manager import MediaManager
+from tools.plex import update_plex_library
 from pathlib import Path
 
 import logging
@@ -23,6 +24,8 @@ class Handler(PatternMatchingEventHandler):
         manager = MediaManager(**self.ctx)
         for obj in manager.mediaobjs:
             obj.move_file()
+        if 'plex' in self.ctx:
+            update_plex_library(self.ctx['plex'])
 
     def on_modified(self, event):
         print("Watchdog received modified event - % s." % event.src_path)

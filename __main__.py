@@ -7,6 +7,7 @@ from configure import setup_logger, get_config, set_logger_verbosity
 from classes.manager import MediaManager
 from classes.watchers import Handler
 from watchdog.observers import Observer
+from tools.plex import update_plex_library
 
 logger = setup_logger()
 
@@ -55,6 +56,8 @@ def rename(ctx, filepaths: List[Path], move: bool, mutate: bool, dry_run: bool, 
     # logger.debug(f"Manager: {handler.__dict__}")
     for obj in manager.mediaobjs:
         obj.move_file()
+    if 'plex' in ctx:
+        update_plex_library(ctx['plex'])
 
     # rename(context=ctx.obj)
 
@@ -96,6 +99,7 @@ def rename(context: dict):
     # logger.debug(f"Manager: {handler.__dict__}")
     for obj in manager.mediaobjs:
         obj.move_file()
+
 
 
 

@@ -57,7 +57,7 @@ def rename(ctx, filepaths: List[Path], move: bool, mutate: bool, dry_run: bool, 
     for obj in manager.mediaobjs:
         obj.move_file()
     if 'plex' in ctx:
-        update_plex_library(ctx['plex'])
+        update_plex_library(ctx.obj['plex'])
 
     # rename(context=ctx.obj)
 

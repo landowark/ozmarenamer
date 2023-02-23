@@ -29,12 +29,10 @@ def IMDB_episode_search(series_name:str, season_number, episode_number):
         ia.update(series, "episodes")
     except (HTTPError, IMDbDataAccessError) as e:
         logger.error(f"IMDb bugged out getting episode details: {e}.")
-        season = str(season_number).zfill(2)
-        episode = str(episode_number).zfill(2)
-        return f"S{season}E{episode}", datetime.today().date()
+        return "", datetime.min.date()
     logger.debug(f"Episodes: {series.data['episodes']}")
     episode = series.data['episodes'][season_number][episode_number]
-    logger.debug(f"Got episose: {episode}")
+    logger.debug(f"Got episode: {episode}")
     episode_name = episode.data['title']
     try:
         airdate = datetime.strptime(episode.data['original air date'], "%d %b. %Y").date()

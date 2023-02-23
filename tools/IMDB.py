@@ -2,6 +2,8 @@ from imdb import Cinemagoer as IMDb
 import logging
 from fuzzywuzzy import process
 from datetime import datetime
+from urllib.error import HTTPError
+from imdb._exceptions import IMDbDataAccessError
 
 
 ia = IMDb()
@@ -16,14 +18,23 @@ def enforce_unique_dictionary(dictionary:dict):
     return result
 
 def IMDB_episode_search(series_name:str, season_number, episode_number):
-    logger.debug("Getting episode with IMDB")
+    logger.debug(f"Getting season {season_number}, episode {episode_number} with IMDB")
     if isinstance(season_number, str):
         season_number = int(season_number)
     if isinstance(episode_number, str):
         episode_number = int(episode_number)
     series = ia.search_movie(series_name)[0]
-    ia.update(series, "episodes")
+    logger.debug(f"Lookup got {series}, attempting to get episodes.")
+    try:
+        ia.update(series, "episodes")
+    except (HTTPError, IMDbDataAccessError) as e:
+        logger.error(f"IMDb bugged out getting episode details: {e}.")
+        season = str(season_number).zfill(2)
+        episode = str(episode_number).zfill(2)
+        return f"S{season}E{episode}", datetime.today().date()
+    logger.debug(f"Episodes: {series.data['episodes']}")
     episode = series.data['episodes'][season_number][episode_number]
+    logger.debug(f"Got episose: {episode}")
     episode_name = episode.data['title']
     try:
         airdate = datetime.strptime(episode.data['original air date'], "%d %b. %Y").date()

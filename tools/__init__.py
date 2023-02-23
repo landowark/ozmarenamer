@@ -262,10 +262,10 @@ def get_episode_name(series_name:str, season_number:int, episode_number:int, tv_
     if "thetvdbkey" in tv_config:
         pass
     else:
-        try:
-            episode_name, airdate = IMDB_episode_search(series_name, season_number, episode_number)
-        except Exception as e:
-            logger.error(f"IMDB bugged out for episode name: {e}.")
+        # try:
+        episode_name, airdate = IMDB_episode_search(series_name, season_number, episode_number)
+        # except Exception as e:
+        #     logger.error(f"IMDB bugged out for episode name: {e}.")
             # episode_name, airdate = wikipedia_tv_episode_search(series_name, season_number, episode_number)
         episode_name = escape_specials(replace_forward_slash_in_title(episode_name))
         logger.debug(f"Got episode name:{episode_name}, airdate: {airdate}.")

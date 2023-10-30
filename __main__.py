@@ -43,12 +43,14 @@ def cli(ctx, config: str, verbose):
 @click.option("--mutate", is_flag=True, help="Mutate file metadata.")
 @click.option("--dry-run", is_flag=True, help="Print new file names only.")
 @click.option("--override-directory", "-o", type=click.Path(exists=True), help="")
+@click.option("--manual", is_flag=True)
 @click.pass_context
-def rename(ctx, filepaths: List[Path], move: bool, mutate: bool, dry_run: bool, override_directory: str):
+def rename(ctx, filepaths: List[Path], move: bool, mutate: bool, dry_run: bool, override_directory: str, manual:bool):
     ctx.obj['filepaths'] = [Path(filepath) for filepath in filepaths]
     ctx.obj['dry_run'] = dry_run
     ctx.obj['move'] = move
     ctx.obj['mutate'] = mutate
+    ctx.obj['manual'] = manual
     if override_directory != None:
         ctx.obj['destination_dir'] = override_directory
     logger.debug(f"The input files are {ctx.obj['filepaths']}")

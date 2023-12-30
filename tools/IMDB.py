@@ -2,6 +2,7 @@ from imdb import Cinemagoer as IMDb
 import logging
 from fuzzywuzzy import process
 from datetime import datetime
+from dateutil.parser import parse
 from urllib.error import HTTPError
 from imdb._exceptions import IMDbDataAccessError
 
@@ -34,14 +35,18 @@ def IMDB_episode_search(series_name:str, season_number, episode_number):
     episode = series.data['episodes'][season_number][episode_number]
     logger.debug(f"Got episode: {episode}")
     episode_name = episode.data['title']
-    try:
-        airdate = datetime.strptime(episode.data['original air date'], "%d %b. %Y").date()
-    except ValueError:
-        # Deal with May as a month.
-        try:
-            airdate = datetime.strptime(episode.data['original air date'], "%d %b %Y").date()
-        except ValueError:
-            airdate = datetime.strptime(episode.data['original air date'], "%a, %b %d, %Y")
+    airdate = parse(episode.data['original air date']).date()
+    # try:
+    #     airdate = datetime.strptime(episode.data['original air date'], "%d %b. %Y").date()
+    # except ValueError:
+    #     # Deal with May as a month.
+    #     try:
+    #         airdate = datetime.strptime(episode.data['original air date'], "%d %b %Y").date()
+    #     except ValueError:
+    #         try:
+    #             airdate = datetime.strptime(episode.data['original air date'], "%a, %b %d, %Y")
+    #         except ValueError:
+    #             airdate =
     return episode_name, airdate
 
 

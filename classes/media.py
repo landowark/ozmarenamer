@@ -8,6 +8,7 @@ import jinja2
 from tools.muta import *
 from tools.imdb import *
 
+
 logger = logging.getLogger(f"ozma.{__name__}")
 
 class MediaObject(object):

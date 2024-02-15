@@ -6,7 +6,7 @@ import sys, inspect, copy
 import logging
 import jinja2
 from tools.muta import *
-
+from tools.imdb import *
 
 logger = logging.getLogger(f"ozma.{__name__}")
 
@@ -120,6 +120,7 @@ class TV(MediaObject):
     def run_parse(self):
         # I want to try and enforce the series name with plex if it exists in the config and wikipedia if not.
         if not self.manual:
+
             self.series_name = enforce_series_name(self.basefile, self.__dict__)
             self.season_number, self.episode_number = get_season_and_episode(self.basefile)
             logger.debug("The auth isn't working for thetvdb v4 api ATM so it is being disabled for now.")
@@ -127,8 +128,13 @@ class TV(MediaObject):
                 del self.class_settings['thetvdbkey']
             except KeyError:
                 logger.error("Okay, thetvdbkey didn't exist in the first place.")
-            self.episode_name, temp_airdate = get_episode_name(self.series_name, self.season_number, self.episode_number, self.class_settings)
-            self.airdate = temp_airdate.strftime(self.date_format)
+            # self.episode_name, temp_airdate = get_episode_name(self.series_name, self.season_number, self.episode_number, self.class_settings)
+            # self.airdate = temp_airdate.strftime(self.date_format)
+            fetcher = IMDBSearch(title=self.series_name)
+            self.series_name = fetcher.title
+            episode = fetcher.find_episode(season=self.season_number, episode=self.episode_number)
+            self.episode_name = episode.title
+            self.airdate = episode.date_aired.strftime(self.date_format)
         else:
             self.series_name = click.prompt("Series Name", type=str)
             self.season_number = click.prompt("Season number", type=int)
@@ -148,7 +154,11 @@ class Movie(MediaObject):
     def run_parse(self):
         if not self.manual:
             self.movie_title, self.movie_release_year = check_movie_title(self.basefile)
-            self.director, self.starring = get_movie_details(self.movie_title, self.movie_release_year)
+            # self.director, self.starring = get_movie_details(self.movie_title, self.movie_release_year)
+            fetcher = IMDBSearch(self.movie_title)
+            self.movie_title = fetcher.title
+            self.movie_release_year = fetcher.release_date
+            self.starring = fetcher.cast
         else:
             self.movie_title = click.prompt("Movie title", type="str")
             self.movie_release_year = click.prompt("Movie release year", type="str")

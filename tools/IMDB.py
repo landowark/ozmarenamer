@@ -6,7 +6,6 @@ from dateutil.parser import parse
 from urllib.error import HTTPError
 from imdb._exceptions import IMDbDataAccessError
 
-
 ia = IMDb()
 
 logger = logging.getLogger("ozma.IMDB")

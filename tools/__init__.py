@@ -25,7 +25,6 @@ extensions = {
     "audio": [".mp3", ".m4a", ".opus"]
 }
 
-
 def get_allowed_extensions():
     return [item for sublist in [extensions[item] for item in extensions] for item in sublist]
 
@@ -53,7 +52,6 @@ def get_episode_date(filename):
             return re.findall(season, filename)[0]
     except:
         return None
-
 
 def get_season(filename):
     season = re.compile(r's(?:eason)?\d{1,2}', re.IGNORECASE)

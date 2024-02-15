@@ -103,4 +103,7 @@ class Episode(object):
         return [item.text for item in html.fromstring(self.response.content).xpath('//a[@data-testid="title-cast-item__actor"]')]
 
     def fetch_director(self):
-        return html.fromstring(self.response.content).xpath('//a[@class="ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link"]')[0].text_content()
+        try:
+            return html.fromstring(self.response.content).xpath('//a[@class="ipc-metadata-list-item__list-content-item ipc-metadata-list-item__list-content-item--link"]')[0].text_content()
+        except IndexError:
+            return None

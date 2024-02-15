@@ -12,6 +12,7 @@ class IMDBSearch(object):
     def __init__(self, title, default: bool = True):
         self.id = None
         self.title = title
+        logger.debug(f"IMDBSearch title: {self.title}")
         self.base_url = "https://www.imdb.com"
         self.headers = {'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 6.1; rv:2.2) Gecko/20110201'}
         url = f"{self.base_url}/search/title/?title={title}"
@@ -38,6 +39,7 @@ class IMDBSearch(object):
         url = f"{self.base_url}{item.values()[0]}"
         m = re.search(r"^/title/(?P<id>.*)/", item.values()[0])
         self.id = m.groupdict()['id']
+        logger.debug(f"ID: {self.id}")
         self.response = requests.get(url=url, headers=self.headers)
         return self.response.content
 
@@ -48,7 +50,7 @@ class IMDBSearch(object):
         release = tree.xpath('//a[@class="ipc-link ipc-link--baseAlt ipc-link--inherit-color"]')
         release = [re.search(r"\d{4}", item.text) for item in release if item.text is not None]
         release_date = [item.group() for item in release if item is not None][0]
-        logger.debug(f"Elements: {tree}")
+        logger.debug(f"Got release date: {release_date} and runtime: {runtime}")
         return release_date, runtime
 
     def get_cast(self):
@@ -61,9 +63,9 @@ class IMDBSearch(object):
             return None
 
     def find_episode(self, season: str | int, episode: str | int):
+        logger.debug(f"Checking episode {episode} of season {season}")
         url = f"{self.base_url}/title/{self.id}/episodes/?season={str(season)}"
         response = requests.get(url=url, headers=self.headers)
-        # return response
         tree = html.fromstring(response.content).xpath('//a[@class="ipc-title-link-wrapper"]')
         element = tree[episode - 1]
         return Episode(url=f"{self.base_url}{element.values()[0]}", element=element)

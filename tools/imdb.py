@@ -67,6 +67,7 @@ class IMDBSearch(object):
         url = f"{self.base_url}/title/{self.id}/episodes/?season={str(season)}"
         response = requests.get(url=url, headers=self.headers)
         tree = html.fromstring(response.content).xpath('//a[@class="ipc-title-link-wrapper"]')
+        logger.debug(f"Number of episodes: {len(tree)}")
         element = tree[episode - 1]
         return Episode(url=f"{self.base_url}{element.values()[0]}", element=element)
 

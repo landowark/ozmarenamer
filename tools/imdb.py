@@ -47,10 +47,16 @@ class IMDBSearch(object):
     def get_basic_info(self):
         tree = html.fromstring(self.full_html)
         runs = tree.xpath('//li[@class="ipc-inline-list__item"]')
-        runtime = [item.text for item in runs if item.text is not None][0]
+        try:
+            runtime = [item.text for item in runs if item.text is not None][0]
+        except IndexError:
+            runtime = None
         release = tree.xpath('//a[@class="ipc-link ipc-link--baseAlt ipc-link--inherit-color"]')
         release = [re.search(r"\d{4}", item.text) for item in release if item.text is not None]
-        release_date = [item.group() for item in release if item is not None][0]
+        try:
+            release_date = [item.group() for item in release if item is not None][0]
+        except IndexError:
+            release_date = None
         logger.debug(f"Got release date: {release_date} and runtime: {runtime}")
         return release_date, runtime
 

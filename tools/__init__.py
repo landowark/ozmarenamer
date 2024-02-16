@@ -325,7 +325,7 @@ def get_song_details(artist:str, song:str, song_config={}):
     #     return wikipedia_song_details(artist, song)
 
 
-def samba_move_file(smb_config:dict, source_file:str, destination_file:str, development:bool):
+def samba_move_file(smb_config:dict, source_file:str, destination_file:str, development:bool, progress: bool = True):
     # smb_config = get_config(section="smb")
     path_list = destination_file.replace("\\", "").replace("?", "").split("/")
     server_address = path_list[2]
@@ -355,7 +355,7 @@ def samba_move_file(smb_config:dict, source_file:str, destination_file:str, deve
         try:
             if not development:
                 logger.debug("Writing file.")
-                resp = conn.storeFile(share, file_path, f)
+                resp = conn.storeFile(share, file_path, f, show_progress=progress)
                 logger.debug(f"SMB protocol returned {resp}")
                 move_trigger = True
             else:

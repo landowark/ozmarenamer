@@ -34,7 +34,7 @@ class MediaManager(object):
                 else:
                     new_medObj = MediaObject(filepath=filepath, **self.__dict__)
                     self.mediaobjs.append(new_medObj)
-                if iii % 5 == 0:
+                if iii % 3 == 0:
                     sleep(5)
 
         else:

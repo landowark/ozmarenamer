@@ -35,6 +35,7 @@ class IMDBSearch(object):
         return [re.sub(r"^\d\.\s", "", t.text_content()) for t in self.items]
 
     def get_full_item(self, index: int = 0) -> str:
+        logger.debug(f"Getting index {index} of {len(self.items)}")
         item = self.items[index]
         url = f"{self.base_url}{item.values()[0]}"
         m = re.search(r"^/title/(?P<id>.*)/", item.values()[0])

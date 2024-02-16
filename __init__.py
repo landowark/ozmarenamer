@@ -18,6 +18,6 @@ def main(*args):
 
 
     for file in manager.mediaobjs:
-        logger.debug(manager.settings)
+        # logger.debug(manager.settings)
         file.move_file()
     update_libraries()

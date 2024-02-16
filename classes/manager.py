@@ -3,6 +3,7 @@ import logging
 from tools import extract_files_if_folder
 from classes.media import MediaObject
 from pathlib import Path
+from time import sleep
 
 logger = logging.getLogger(f"ozma.{__name__}")
 
@@ -19,7 +20,7 @@ class MediaManager(object):
 
     def load_files(self, file:Path|None=None):
         if file is None:
-            for filepath in self.filepaths:
+            for iii, filepath in enumerate(self.filepaths):
                 if filepath.is_dir():
                     logger.debug(f"Filepath {filepath} is a directory, extracting files.")
                     file_list = extract_files_if_folder(dir_path=filepath)
@@ -33,6 +34,9 @@ class MediaManager(object):
                 else:
                     new_medObj = MediaObject(filepath=filepath, **self.__dict__)
                     self.mediaobjs.append(new_medObj)
+                if iii % 5 == 0:
+                    sleep(5)
+
         else:
             new_medObj = MediaObject(filepath=file, **self.__dict__)
             self.mediaobjs.append(new_medObj)
